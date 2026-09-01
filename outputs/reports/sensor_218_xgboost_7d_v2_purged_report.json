@@ -1,0 +1,64 @@
+{
+    "sensor_id": 218,
+    "horizon": "7d",
+    "horizon_hours": 168,
+    "model": "XGBoost",
+    "feature_version": "V2",
+    "purged": true,
+    "feature_count": 96,
+    "training_rows": 5444,
+    "validation_rows": 867,
+    "test_rows": 1035,
+    "missing_feature_cells": {
+        "train": 131212,
+        "validation": 20817,
+        "test": 27673
+    },
+    "validation": {
+        "mae": 62.667937433843385,
+        "rmse": 78.4778474093515,
+        "r2": -1.1721644510837441
+    },
+    "test": {
+        "mae": 55.8812984024269,
+        "rmse": 78.24618417853524,
+        "r2": -0.5954477091774286
+    },
+    "xgboost_parameters": {
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "max_depth": 5,
+        "min_child_weight": 3,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "objective": "reg:squarederror",
+        "random_state": 42,
+        "n_jobs": -1
+    },
+    "top_features": {
+        "week_of_year": 0.13742534816265106,
+        "day_of_year": 0.09881838411092758,
+        "week_of_year_cos": 0.09319744259119034,
+        "pm25_rolling_min_72h": 0.03448835387825966,
+        "day": 0.03126605600118637,
+        "day_of_year_sin": 0.023731021210551262,
+        "month_sin": 0.020098475739359856,
+        "pm25_rolling_median_72h": 0.016899026930332184,
+        "week_of_year_sin": 0.016169462352991104,
+        "dow_sin": 0.01603289321064949,
+        "pm25_rolling_mean_24h": 0.015700940042734146,
+        "hour_cos": 0.015030366368591785,
+        "pm25_rolling_mean_336h": 0.014364906586706638,
+        "day_of_week": 0.01386935543268919,
+        "pm25_rolling_mean_7d": 0.013251874595880508,
+        "pm25_cv_48h": 0.013118011876940727,
+        "season_code": 0.01238398626446724,
+        "pm25_rolling_median_48h": 0.01224586833268404,
+        "pm25_rolling_range_72h": 0.010789046995341778,
+        "pm25_lag_168h": 0.01030988059937954
+    },
+    "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_7d_v2_purged.pkl",
+    "predictions_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_7d_v2_purged_predictions.csv"
+}

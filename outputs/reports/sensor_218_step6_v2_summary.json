@@ -1,0 +1,58 @@
+[
+    {
+        "horizon": "48h",
+        "validation_mae": 52.98993827650282,
+        "validation_rmse": 65.91395624887072,
+        "validation_r2": -0.32208628063691447,
+        "test_mae": 49.60877500958455,
+        "test_rmse": 67.34841521817211,
+        "test_r2": -0.26775541990901663,
+        "feature_count": 96,
+        "training_rows": 5647,
+        "validation_rows": 1125,
+        "test_rows": 1173
+    },
+    {
+        "horizon": "72h",
+        "validation_mae": 50.76189247693065,
+        "validation_rmse": 60.16559697874382,
+        "validation_r2": -0.1316989277162972,
+        "test_mae": 51.767800133717635,
+        "test_rmse": 71.2287556237888,
+        "test_r2": -0.39068042636174183,
+        "feature_count": 96,
+        "training_rows": 5607,
+        "validation_rows": 1073,
+        "test_rows": 1145
+    },
+    {
+        "horizon": "7d",
+        "validation_mae": 62.667937433843385,
+        "validation_rmse": 78.4778474093515,
+        "validation_r2": -1.1721644510837441,
+        "test_mae": 55.8812984024269,
+        "test_rmse": 78.24618417853524,
+        "test_r2": -0.5954477091774286,
+        "feature_count": 96,
+        "training_rows": 5444,
+        "validation_rows": 867,
+        "test_rows": 1035
+    },
+    {
+        "horizon": "14d",
+        "validation_mae": 48.10972719607146,
+        "validation_rmse": 62.624075779793834,
+        "validation_r2": -0.5975333809775218,
+        "test_mae": 56.73251375806996,
+        "test_rmse": 77.49868159092416,
+        "test_r2": -0.40612480663074746,
+        "feature_count": 96,
+        "training_rows": 5162,
+        "validation_rows": 506,
+        "test_rows": 843
+    },
+    {
+        "horizon": "30d",
+        "error": "No validation observations available for 30d."
+    }
+]

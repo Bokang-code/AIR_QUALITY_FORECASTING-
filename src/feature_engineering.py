@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -34,15 +35,19 @@ def load_data():
         errors="coerce"
     )
 
-    # Make sure missing-value indicator is numeric
-    df["pm25_missing"] = (
-        df["pm25"].isna().astype(int)
-    )
-
     # Sort chronologically
     df = df.sort_values(
         "timestamp"
     ).reset_index(drop=True)
+
+    # Create missing-value indicator BEFORE any
+    # missing-value handling.
+    #
+    # 1 = PM2.5 was genuinely missing
+    # 0 = PM2.5 was observed
+    df["pm25_missing"] = (
+        df["pm25"].isna().astype(int)
+    )
 
     print(f"\nRows loaded: {len(df):,}")
 
@@ -58,6 +63,7 @@ def load_data():
 
     return df
 
+
 # ============================================================
 # HANDLE MISSING PM2.5 VALUES
 # ============================================================
@@ -68,33 +74,29 @@ def handle_missing_pm25(df):
     print("HANDLING MISSING PM2.5 VALUES")
     print("=" * 80)
 
-    missing_before = df["pm25"].isna().sum()
+    missing_count = df["pm25"].isna().sum()
 
     print(
-        f"Missing PM2.5 before interpolation: "
-        f"{missing_before:,}"
+        f"Missing PM2.5 values retained: "
+        f"{missing_count:,}"
     )
-
-    # Time-based interpolation.
-    #
-    # This estimates missing values using the surrounding
-    # observations in chronological order.
-    df["pm25"] = (
-        df["pm25"]
-        .interpolate(
-            method="linear",
-            limit_direction="both"
-        )
-    )
-
-    missing_after = df["pm25"].isna().sum()
 
     print(
-        f"Missing PM2.5 after interpolation: "
-        f"{missing_after:,}"
+        "\nNo interpolation is performed."
+    )
+
+    print(
+        "Genuine missing PM2.5 observations are "
+        "kept as NaN so that XGBoost can handle them."
+    )
+
+    print(
+        "The pm25_missing feature records whether "
+        "the original PM2.5 value was missing."
     )
 
     return df
+
 
 # ============================================================
 # TIME FEATURES
@@ -132,7 +134,9 @@ def create_time_features(df):
         else:
             return "autumn"
 
-    df["season"] = df["month"].apply(get_season)
+    df["season"] = df["month"].apply(
+        get_season
+    )
 
     # Numeric season code for ML models
     season_mapping = {
@@ -163,8 +167,6 @@ def create_cyclical_features(df):
     print("\n" + "=" * 80)
     print("CREATING CYCLICAL TIME FEATURES")
     print("=" * 80)
-
-    import numpy as np
 
     # Hour of day
     df["hour_sin"] = np.sin(
@@ -212,25 +214,39 @@ def create_lag_features(df):
     print("=" * 80)
 
     # Previous hour
-    df["pm25_lag_1h"] = df["pm25"].shift(1)
+    df["pm25_lag_1h"] = (
+        df["pm25"].shift(1)
+    )
 
     # Previous 3 hours
-    df["pm25_lag_3h"] = df["pm25"].shift(3)
+    df["pm25_lag_3h"] = (
+        df["pm25"].shift(3)
+    )
 
     # Previous 6 hours
-    df["pm25_lag_6h"] = df["pm25"].shift(6)
+    df["pm25_lag_6h"] = (
+        df["pm25"].shift(6)
+    )
 
     # Previous 12 hours
-    df["pm25_lag_12h"] = df["pm25"].shift(12)
+    df["pm25_lag_12h"] = (
+        df["pm25"].shift(12)
+    )
 
     # Same hour previous day
-    df["pm25_lag_24h"] = df["pm25"].shift(24)
+    df["pm25_lag_24h"] = (
+        df["pm25"].shift(24)
+    )
 
     # Same hour previous 2 days
-    df["pm25_lag_48h"] = df["pm25"].shift(48)
+    df["pm25_lag_48h"] = (
+        df["pm25"].shift(48)
+    )
 
     # Same hour previous week
-    df["pm25_lag_168h"] = df["pm25"].shift(168)
+    df["pm25_lag_168h"] = (
+        df["pm25"].shift(168)
+    )
 
     print(
         "Created lags: 1h, 3h, 6h, 12h, "
@@ -251,6 +267,7 @@ def create_rolling_features(df):
     print("=" * 80)
 
     # Use only historical PM2.5 values.
+    #
     # shift(1) ensures the current observation
     # is not included in the rolling calculation.
     previous = df["pm25"].shift(1)
@@ -331,7 +348,9 @@ def create_target(df):
     print("=" * 80)
 
     # Predict PM2.5 one hour into the future.
-    df["target_pm25"] = df["pm25"].shift(-1)
+    df["target_pm25"] = (
+        df["pm25"].shift(-1)
+    )
 
     print(
         "Target: PM2.5 concentration 1 hour ahead."
@@ -363,10 +382,21 @@ def validate_features(df):
     missing = (
         df.isna()
         .sum()
-        .sort_values(ascending=False)
+        .sort_values(
+            ascending=False
+        )
     )
 
-    print(missing.to_string())
+    print(
+        missing.to_string()
+    )
+
+    print("\nOriginal PM2.5 missing values:")
+
+    print(
+        f"pm25_missing = "
+        f"{df['pm25_missing'].sum():,}"
+    )
 
     print("\nTarget missing values:")
 

@@ -1,0 +1,61 @@
+{
+    "experiment": "Step 4.5 Purged XGBoost",
+    "split_method": "purged_chronological",
+    "results": [
+        {
+            "horizon": "48h",
+            "horizon_hours": 48,
+            "mae": 50.54657318222691,
+            "rmse": 71.77131088408932,
+            "r2": -0.4641595363534412,
+            "training_rows": 3925,
+            "validation_rows": 804,
+            "testing_rows": 852,
+            "purge_hours": 48
+        },
+        {
+            "horizon": "72h",
+            "horizon_hours": 72,
+            "mae": 46.2790187010291,
+            "rmse": 65.0827776265283,
+            "r2": -0.1934957323205413,
+            "training_rows": 3914,
+            "validation_rows": 782,
+            "testing_rows": 855,
+            "purge_hours": 72
+        },
+        {
+            "horizon": "7d",
+            "horizon_hours": 168,
+            "mae": 55.08363838150225,
+            "rmse": 76.18615387541138,
+            "r2": -0.5446250648319257,
+            "training_rows": 3734,
+            "validation_rows": 668,
+            "testing_rows": 837,
+            "purge_hours": 168
+        },
+        {
+            "horizon": "14d",
+            "horizon_hours": 336,
+            "mae": 55.274393982485115,
+            "rmse": 73.22541752093768,
+            "r2": -0.4673455287887365,
+            "training_rows": 3534,
+            "validation_rows": 494,
+            "testing_rows": 830,
+            "purge_hours": 336
+        },
+        {
+            "horizon": "30d",
+            "horizon_hours": 720,
+            "mae": 59.30884027539301,
+            "rmse": 77.41298699891503,
+            "r2": -0.6048242287341208,
+            "training_rows": 3099,
+            "validation_rows": 99,
+            "testing_rows": 819,
+            "purge_hours": 720
+        }
+    ]
+}

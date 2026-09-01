@@ -1,0 +1,892 @@
+[
+    {
+        "horizon": "48h",
+        "horizon_hours": 48,
+        "best_configuration": "stronger_regularization",
+        "best_parameters": {
+            "name": "stronger_regularization",
+            "n_estimators": 500,
+            "learning_rate": 0.05,
+            "max_depth": 5,
+            "min_child_weight": 5,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 0.1,
+            "reg_lambda": 2.0
+        },
+        "validation_mae": 54.5940026406625,
+        "validation_rmse": 67.70475629493053,
+        "validation_r2": -0.45587783151471784,
+        "test_mae": 50.10315503935883,
+        "test_rmse": 71.00544769143981,
+        "test_r2": -0.40603475963641045,
+        "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_48h_tuned.pkl",
+        "prediction_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_48h_tuned_predictions.csv",
+        "all_tuning_results": [
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "stronger_regularization",
+                "validation_mae": 54.5940026406625,
+                "validation_rmse": 67.70475629493053,
+                "validation_r2": -0.45587783151471784,
+                "parameters": {
+                    "name": "stronger_regularization",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 5,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.1,
+                    "reg_lambda": 2.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "medium_depth",
+                "validation_mae": 54.7071234337726,
+                "validation_rmse": 67.5763064717424,
+                "validation_r2": -0.45035887347715264,
+                "parameters": {
+                    "name": "medium_depth",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "baseline",
+                "validation_mae": 56.637690069663584,
+                "validation_rmse": 69.77475104359574,
+                "validation_r2": -0.5462622952541616,
+                "parameters": {
+                    "name": "baseline",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 6,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "more_trees",
+                "validation_mae": 56.70772876549716,
+                "validation_rmse": 69.69525056323289,
+                "validation_r2": -0.5427407187025106,
+                "parameters": {
+                    "name": "more_trees",
+                    "n_estimators": 800,
+                    "learning_rate": 0.03,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "lower_learning_rate",
+                "validation_mae": 56.972181384243186,
+                "validation_rmse": 70.16462870569701,
+                "validation_r2": -0.563590551940568,
+                "parameters": {
+                    "name": "lower_learning_rate",
+                    "n_estimators": 800,
+                    "learning_rate": 0.02,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "deeper",
+                "validation_mae": 57.92594485970872,
+                "validation_rmse": 70.86160503086735,
+                "validation_r2": -0.5948085111489629,
+                "parameters": {
+                    "name": "deeper",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 8,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "subsample_regularized",
+                "validation_mae": 58.604328233804274,
+                "validation_rmse": 72.14451431256379,
+                "validation_r2": -0.6530774546337981,
+                "parameters": {
+                    "name": "subsample_regularized",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.7,
+                    "colsample_bytree": 0.7,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "48h",
+                "horizon_hours": 48,
+                "configuration": "shallower",
+                "validation_mae": 59.18673029942299,
+                "validation_rmse": 73.11241308880732,
+                "validation_r2": -0.6977307349904447,
+                "parameters": {
+                    "name": "shallower",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 3,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            }
+        ]
+    },
+    {
+        "horizon": "72h",
+        "horizon_hours": 72,
+        "best_configuration": "subsample_regularized",
+        "best_parameters": {
+            "name": "subsample_regularized",
+            "n_estimators": 500,
+            "learning_rate": 0.05,
+            "max_depth": 5,
+            "min_child_weight": 3,
+            "subsample": 0.7,
+            "colsample_bytree": 0.7,
+            "reg_alpha": 0.0,
+            "reg_lambda": 1.0
+        },
+        "validation_mae": 54.42741919905328,
+        "validation_rmse": 64.27942660731456,
+        "validation_r2": -0.26334492122262954,
+        "test_mae": 48.809874295897245,
+        "test_rmse": 66.48984647863159,
+        "test_r2": -0.21467677084414638,
+        "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_72h_tuned.pkl",
+        "prediction_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_72h_tuned_predictions.csv",
+        "all_tuning_results": [
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "subsample_regularized",
+                "validation_mae": 54.42741919905328,
+                "validation_rmse": 64.27942660731456,
+                "validation_r2": -0.26334492122262954,
+                "parameters": {
+                    "name": "subsample_regularized",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.7,
+                    "colsample_bytree": 0.7,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "lower_learning_rate",
+                "validation_mae": 55.961414795702375,
+                "validation_rmse": 65.93920246012749,
+                "validation_r2": -0.3294295586283449,
+                "parameters": {
+                    "name": "lower_learning_rate",
+                    "n_estimators": 800,
+                    "learning_rate": 0.02,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "shallower",
+                "validation_mae": 56.12188589969254,
+                "validation_rmse": 65.93781930983472,
+                "validation_r2": -0.32937378659807615,
+                "parameters": {
+                    "name": "shallower",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 3,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "stronger_regularization",
+                "validation_mae": 56.294494704517255,
+                "validation_rmse": 66.13891722264025,
+                "validation_r2": -0.33749483021807136,
+                "parameters": {
+                    "name": "stronger_regularization",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 5,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.1,
+                    "reg_lambda": 2.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "more_trees",
+                "validation_mae": 56.52141667387979,
+                "validation_rmse": 66.23913661499611,
+                "validation_r2": -0.3415512763013562,
+                "parameters": {
+                    "name": "more_trees",
+                    "n_estimators": 800,
+                    "learning_rate": 0.03,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "baseline",
+                "validation_mae": 56.777249304534834,
+                "validation_rmse": 66.14692865778635,
+                "validation_r2": -0.337818872476763,
+                "parameters": {
+                    "name": "baseline",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 6,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "medium_depth",
+                "validation_mae": 57.01377470840883,
+                "validation_rmse": 66.66682727830108,
+                "validation_r2": -0.35893137304861367,
+                "parameters": {
+                    "name": "medium_depth",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "72h",
+                "horizon_hours": 72,
+                "configuration": "deeper",
+                "validation_mae": 57.80722250292063,
+                "validation_rmse": 67.77363899076192,
+                "validation_r2": -0.40442826263491183,
+                "parameters": {
+                    "name": "deeper",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 8,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            }
+        ]
+    },
+    {
+        "horizon": "7d",
+        "horizon_hours": 168,
+        "best_configuration": "lower_learning_rate",
+        "best_parameters": {
+            "name": "lower_learning_rate",
+            "n_estimators": 800,
+            "learning_rate": 0.02,
+            "max_depth": 5,
+            "min_child_weight": 3,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 0.0,
+            "reg_lambda": 1.0
+        },
+        "validation_mae": 46.33375120448495,
+        "validation_rmse": 61.07451746947127,
+        "validation_r2": -0.18132129737014657,
+        "test_mae": 52.50046000284345,
+        "test_rmse": 74.10620027981074,
+        "test_r2": -0.3723378597963283,
+        "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_7d_tuned.pkl",
+        "prediction_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_7d_tuned_predictions.csv",
+        "all_tuning_results": [
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "lower_learning_rate",
+                "validation_mae": 46.33375120448495,
+                "validation_rmse": 61.07451746947127,
+                "validation_r2": -0.18132129737014657,
+                "parameters": {
+                    "name": "lower_learning_rate",
+                    "n_estimators": 800,
+                    "learning_rate": 0.02,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "more_trees",
+                "validation_mae": 46.830049868829235,
+                "validation_rmse": 61.627530747351415,
+                "validation_r2": -0.2028112429631348,
+                "parameters": {
+                    "name": "more_trees",
+                    "n_estimators": 800,
+                    "learning_rate": 0.03,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "deeper",
+                "validation_mae": 47.247089049059475,
+                "validation_rmse": 62.07234662825157,
+                "validation_r2": -0.2202372344702661,
+                "parameters": {
+                    "name": "deeper",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 8,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "baseline",
+                "validation_mae": 47.51069540606287,
+                "validation_rmse": 62.348168258074274,
+                "validation_r2": -0.23110570067866854,
+                "parameters": {
+                    "name": "baseline",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 6,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "medium_depth",
+                "validation_mae": 47.561093473148915,
+                "validation_rmse": 61.64392480667885,
+                "validation_r2": -0.20345126801171198,
+                "parameters": {
+                    "name": "medium_depth",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "subsample_regularized",
+                "validation_mae": 48.25581117161734,
+                "validation_rmse": 62.34750419740084,
+                "validation_r2": -0.23107947618643987,
+                "parameters": {
+                    "name": "subsample_regularized",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.7,
+                    "colsample_bytree": 0.7,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "stronger_regularization",
+                "validation_mae": 48.579061693774015,
+                "validation_rmse": 63.23747087009197,
+                "validation_r2": -0.26647589883177303,
+                "parameters": {
+                    "name": "stronger_regularization",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 5,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.1,
+                    "reg_lambda": 2.0
+                }
+            },
+            {
+                "horizon": "7d",
+                "horizon_hours": 168,
+                "configuration": "shallower",
+                "validation_mae": 49.730589762419285,
+                "validation_rmse": 63.201050248653914,
+                "validation_r2": -0.26501750538518465,
+                "parameters": {
+                    "name": "shallower",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 3,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            }
+        ]
+    },
+    {
+        "horizon": "14d",
+        "horizon_hours": 336,
+        "best_configuration": "shallower",
+        "best_parameters": {
+            "name": "shallower",
+            "n_estimators": 500,
+            "learning_rate": 0.05,
+            "max_depth": 3,
+            "min_child_weight": 3,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 0.0,
+            "reg_lambda": 1.0
+        },
+        "validation_mae": 45.83960184877218,
+        "validation_rmse": 57.41585282979463,
+        "validation_r2": -0.45399933633388545,
+        "test_mae": 56.44259615895251,
+        "test_rmse": 72.56975681394714,
+        "test_r2": -0.2877005707337206,
+        "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_14d_tuned.pkl",
+        "prediction_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_14d_tuned_predictions.csv",
+        "all_tuning_results": [
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "shallower",
+                "validation_mae": 45.83960184877218,
+                "validation_rmse": 57.41585282979463,
+                "validation_r2": -0.45399933633388545,
+                "parameters": {
+                    "name": "shallower",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 3,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "subsample_regularized",
+                "validation_mae": 47.26705294775094,
+                "validation_rmse": 58.51700529689489,
+                "validation_r2": -0.5103053222262781,
+                "parameters": {
+                    "name": "subsample_regularized",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.7,
+                    "colsample_bytree": 0.7,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "more_trees",
+                "validation_mae": 48.585984650893735,
+                "validation_rmse": 60.19199801260155,
+                "validation_r2": -0.5980048287338013,
+                "parameters": {
+                    "name": "more_trees",
+                    "n_estimators": 800,
+                    "learning_rate": 0.03,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "baseline",
+                "validation_mae": 49.3691646869366,
+                "validation_rmse": 61.09192410030069,
+                "validation_r2": -0.646145333839826,
+                "parameters": {
+                    "name": "baseline",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 6,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "lower_learning_rate",
+                "validation_mae": 49.46700265243469,
+                "validation_rmse": 61.2757176812124,
+                "validation_r2": -0.6560650100878085,
+                "parameters": {
+                    "name": "lower_learning_rate",
+                    "n_estimators": 800,
+                    "learning_rate": 0.02,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "medium_depth",
+                "validation_mae": 49.76170389275802,
+                "validation_rmse": 61.19677415322564,
+                "validation_r2": -0.6518006324872212,
+                "parameters": {
+                    "name": "medium_depth",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "deeper",
+                "validation_mae": 50.63655621609707,
+                "validation_rmse": 62.470742660762824,
+                "validation_r2": -0.721289446750379,
+                "parameters": {
+                    "name": "deeper",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 8,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "14d",
+                "horizon_hours": 336,
+                "configuration": "stronger_regularization",
+                "validation_mae": 51.653610654205444,
+                "validation_rmse": 63.0238486932798,
+                "validation_r2": -0.7519044261919716,
+                "parameters": {
+                    "name": "stronger_regularization",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 5,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.1,
+                    "reg_lambda": 2.0
+                }
+            }
+        ]
+    },
+    {
+        "horizon": "30d",
+        "horizon_hours": 720,
+        "best_configuration": "deeper",
+        "best_parameters": {
+            "name": "deeper",
+            "n_estimators": 500,
+            "learning_rate": 0.05,
+            "max_depth": 8,
+            "min_child_weight": 3,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 0.0,
+            "reg_lambda": 1.0
+        },
+        "validation_mae": 64.11538688582603,
+        "validation_rmse": 72.24445689095664,
+        "validation_r2": -1.2719040451733301,
+        "test_mae": 49.66318157919092,
+        "test_rmse": 64.09208223366566,
+        "test_r2": -0.3180725489475973,
+        "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_30d_tuned.pkl",
+        "prediction_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_30d_tuned_predictions.csv",
+        "all_tuning_results": [
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "deeper",
+                "validation_mae": 64.11538688582603,
+                "validation_rmse": 72.24445689095664,
+                "validation_r2": -1.2719040451733301,
+                "parameters": {
+                    "name": "deeper",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 8,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "baseline",
+                "validation_mae": 67.11535968202533,
+                "validation_rmse": 74.801801500923,
+                "validation_r2": -1.4355948019411864,
+                "parameters": {
+                    "name": "baseline",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 6,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "lower_learning_rate",
+                "validation_mae": 68.84299827344489,
+                "validation_rmse": 76.69740771039856,
+                "validation_r2": -1.5606032640301035,
+                "parameters": {
+                    "name": "lower_learning_rate",
+                    "n_estimators": 800,
+                    "learning_rate": 0.02,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "more_trees",
+                "validation_mae": 69.50908294831864,
+                "validation_rmse": 77.17588686560661,
+                "validation_r2": -1.5926517264923987,
+                "parameters": {
+                    "name": "more_trees",
+                    "n_estimators": 800,
+                    "learning_rate": 0.03,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "subsample_regularized",
+                "validation_mae": 71.69731406009558,
+                "validation_rmse": 79.53363467555658,
+                "validation_r2": -1.7534841693771663,
+                "parameters": {
+                    "name": "subsample_regularized",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.7,
+                    "colsample_bytree": 0.7,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "medium_depth",
+                "validation_mae": 71.74296860743051,
+                "validation_rmse": 79.46540201898296,
+                "validation_r2": -1.7487617158009412,
+                "parameters": {
+                    "name": "medium_depth",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "stronger_regularization",
+                "validation_mae": 73.50736086296313,
+                "validation_rmse": 81.3931953786073,
+                "validation_r2": -1.8837467687675447,
+                "parameters": {
+                    "name": "stronger_regularization",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 5,
+                    "min_child_weight": 5,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.1,
+                    "reg_lambda": 2.0
+                }
+            },
+            {
+                "horizon": "30d",
+                "horizon_hours": 720,
+                "configuration": "shallower",
+                "validation_mae": 77.27162501787899,
+                "validation_rmse": 84.26851356105539,
+                "validation_r2": -2.0910895747450025,
+                "parameters": {
+                    "name": "shallower",
+                    "n_estimators": 500,
+                    "learning_rate": 0.05,
+                    "max_depth": 3,
+                    "min_child_weight": 3,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "reg_alpha": 0.0,
+                    "reg_lambda": 1.0
+                }
+            }
+        ]
+    }
+]

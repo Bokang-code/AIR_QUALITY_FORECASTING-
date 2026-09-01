@@ -1,0 +1,72 @@
+{
+    "model": "XGBoost",
+    "sensor": 218,
+    "forecast_horizon": "14d",
+    "forecast_horizon_hours": 336,
+    "split_method": "purged_chronological",
+    "purge_hours": 336,
+    "features": [
+        "pm25",
+        "pm25_missing",
+        "hour",
+        "day",
+        "month",
+        "day_of_week",
+        "weekend",
+        "season_code",
+        "hour_sin",
+        "hour_cos",
+        "dow_sin",
+        "dow_cos",
+        "month_sin",
+        "month_cos",
+        "pm25_lag_1h",
+        "pm25_lag_3h",
+        "pm25_lag_6h",
+        "pm25_lag_12h",
+        "pm25_lag_24h",
+        "pm25_lag_48h",
+        "pm25_lag_168h",
+        "pm25_rolling_mean_6h",
+        "pm25_rolling_std_6h",
+        "pm25_rolling_mean_24h",
+        "pm25_rolling_std_24h",
+        "pm25_rolling_mean_7d",
+        "pm25_rolling_std_7d"
+    ],
+    "feature_count": 27,
+    "split": {
+        "training_rows": 3534,
+        "validation_rows": 494,
+        "testing_rows": 830,
+        "train_validation_purge_rows": 336,
+        "validation_test_purge_rows": 336
+    },
+    "validation": {
+        "mae": 49.13073840894197,
+        "rmse": 61.63954417746712,
+        "r2": -0.4681805675477837
+    },
+    "test": {
+        "mae": 55.274393982485115,
+        "rmse": 73.22541752093768,
+        "r2": -0.4673455287887365
+    },
+    "top_features": {
+        "month": 0.24785451591014862,
+        "month_cos": 0.11680003255605698,
+        "month_sin": 0.10896649211645126,
+        "day": 0.06708765029907227,
+        "pm25_rolling_std_24h": 0.05276713892817497,
+        "day_of_week": 0.04980625957250595,
+        "pm25_rolling_std_7d": 0.043459609150886536,
+        "pm25_rolling_mean_24h": 0.03924548625946045,
+        "dow_sin": 0.03676799684762955,
+        "pm25_rolling_mean_7d": 0.03371455892920494,
+        "pm25_lag_24h": 0.02023625746369362,
+        "season_code": 0.019256720319390297,
+        "dow_cos": 0.017753245308995247,
+        "hour_cos": 0.01683591492474079,
+        "pm25_lag_48h": 0.014819725416600704
+    }
+}

@@ -1,0 +1,64 @@
+{
+    "sensor_id": 218,
+    "horizon": "72h",
+    "horizon_hours": 72,
+    "model": "XGBoost",
+    "feature_version": "V2",
+    "purged": true,
+    "feature_count": 96,
+    "training_rows": 5607,
+    "validation_rows": 1073,
+    "test_rows": 1145,
+    "missing_feature_cells": {
+        "train": 133315,
+        "validation": 27255,
+        "test": 30446
+    },
+    "validation": {
+        "mae": 50.76189247693065,
+        "rmse": 60.16559697874382,
+        "r2": -0.1316989277162972
+    },
+    "test": {
+        "mae": 51.767800133717635,
+        "rmse": 71.2287556237888,
+        "r2": -0.39068042636174183
+    },
+    "xgboost_parameters": {
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "max_depth": 5,
+        "min_child_weight": 3,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "objective": "reg:squarederror",
+        "random_state": 42,
+        "n_jobs": -1
+    },
+    "top_features": {
+        "pm25_range_72h": 0.07634047418832779,
+        "day_of_year": 0.06347522139549255,
+        "day_of_year_sin": 0.054715000092983246,
+        "month_sin": 0.054576270282268524,
+        "pm25_rolling_range_72h": 0.051651570945978165,
+        "week_of_year_sin": 0.03975856304168701,
+        "pm25_rolling_min_48h": 0.02940373308956623,
+        "pm25_rolling_mean_7d": 0.02336609922349453,
+        "weekend": 0.020827457308769226,
+        "pm25_cv_336h": 0.01820402778685093,
+        "pm25_rolling_std_336h": 0.01803646981716156,
+        "pm25_rolling_range_48h": 0.017913149669766426,
+        "pm25_rolling_median_48h": 0.01764879748225212,
+        "pm25_rolling_min_336h": 0.016643784940242767,
+        "hour_cos": 0.016591452062129974,
+        "day": 0.016358427703380585,
+        "week_of_year_cos": 0.015929467976093292,
+        "dow_cos": 0.014208114705979824,
+        "pm25_rolling_max_48h": 0.013937873765826225,
+        "pm25_rolling_min_72h": 0.013266071677207947
+    },
+    "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_72h_v2_purged.pkl",
+    "predictions_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_72h_v2_purged_predictions.csv"
+}

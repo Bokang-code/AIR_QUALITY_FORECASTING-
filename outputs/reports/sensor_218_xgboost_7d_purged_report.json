@@ -1,0 +1,72 @@
+{
+    "model": "XGBoost",
+    "sensor": 218,
+    "forecast_horizon": "7d",
+    "forecast_horizon_hours": 168,
+    "split_method": "purged_chronological",
+    "purge_hours": 168,
+    "features": [
+        "pm25",
+        "pm25_missing",
+        "hour",
+        "day",
+        "month",
+        "day_of_week",
+        "weekend",
+        "season_code",
+        "hour_sin",
+        "hour_cos",
+        "dow_sin",
+        "dow_cos",
+        "month_sin",
+        "month_cos",
+        "pm25_lag_1h",
+        "pm25_lag_3h",
+        "pm25_lag_6h",
+        "pm25_lag_12h",
+        "pm25_lag_24h",
+        "pm25_lag_48h",
+        "pm25_lag_168h",
+        "pm25_rolling_mean_6h",
+        "pm25_rolling_std_6h",
+        "pm25_rolling_mean_24h",
+        "pm25_rolling_std_24h",
+        "pm25_rolling_mean_7d",
+        "pm25_rolling_std_7d"
+    ],
+    "feature_count": 27,
+    "split": {
+        "training_rows": 3734,
+        "validation_rows": 668,
+        "testing_rows": 837,
+        "train_validation_purge_rows": 168,
+        "validation_test_purge_rows": 168
+    },
+    "validation": {
+        "mae": 45.31209770648066,
+        "rmse": 61.93307362233578,
+        "r2": -0.2819917545631019
+    },
+    "test": {
+        "mae": 55.08363838150225,
+        "rmse": 76.18615387541138,
+        "r2": -0.5446250648319257
+    },
+    "top_features": {
+        "month": 0.2915038466453552,
+        "month_sin": 0.15933746099472046,
+        "day": 0.07501834630966187,
+        "month_cos": 0.05011067911982536,
+        "day_of_week": 0.046392396092414856,
+        "dow_sin": 0.042615801095962524,
+        "pm25_rolling_std_7d": 0.03287196531891823,
+        "pm25_rolling_mean_24h": 0.027473000809550285,
+        "pm25_rolling_mean_7d": 0.027372710406780243,
+        "dow_cos": 0.023210344836115837,
+        "pm25_rolling_mean_6h": 0.021419744938611984,
+        "hour_cos": 0.020866815000772476,
+        "pm25_lag_24h": 0.02067987620830536,
+        "season_code": 0.02012592740356922,
+        "hour": 0.018725499510765076
+    }
+}

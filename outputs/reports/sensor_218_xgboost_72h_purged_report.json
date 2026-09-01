@@ -1,0 +1,72 @@
+{
+    "model": "XGBoost",
+    "sensor": 218,
+    "forecast_horizon": "72h",
+    "forecast_horizon_hours": 72,
+    "split_method": "purged_chronological",
+    "purge_hours": 72,
+    "features": [
+        "pm25",
+        "pm25_missing",
+        "hour",
+        "day",
+        "month",
+        "day_of_week",
+        "weekend",
+        "season_code",
+        "hour_sin",
+        "hour_cos",
+        "dow_sin",
+        "dow_cos",
+        "month_sin",
+        "month_cos",
+        "pm25_lag_1h",
+        "pm25_lag_3h",
+        "pm25_lag_6h",
+        "pm25_lag_12h",
+        "pm25_lag_24h",
+        "pm25_lag_48h",
+        "pm25_lag_168h",
+        "pm25_rolling_mean_6h",
+        "pm25_rolling_std_6h",
+        "pm25_rolling_mean_24h",
+        "pm25_rolling_std_24h",
+        "pm25_rolling_mean_7d",
+        "pm25_rolling_std_7d"
+    ],
+    "feature_count": 27,
+    "split": {
+        "training_rows": 3914,
+        "validation_rows": 782,
+        "testing_rows": 855,
+        "train_validation_purge_rows": 72,
+        "validation_test_purge_rows": 72
+    },
+    "validation": {
+        "mae": 58.780508231628886,
+        "rmse": 68.11282042728972,
+        "r2": -0.43877529143456484
+    },
+    "test": {
+        "mae": 46.2790187010291,
+        "rmse": 65.0827776265283,
+        "r2": -0.1934957323205413
+    },
+    "top_features": {
+        "month": 0.2023671269416809,
+        "month_sin": 0.16161826252937317,
+        "pm25_rolling_mean_7d": 0.06526323407888412,
+        "day_of_week": 0.05763348937034607,
+        "day": 0.05339450761675835,
+        "pm25_rolling_std_7d": 0.04955768957734108,
+        "dow_cos": 0.037903815507888794,
+        "dow_sin": 0.03716656565666199,
+        "weekend": 0.03566962853074074,
+        "pm25_rolling_mean_24h": 0.028655627742409706,
+        "pm25_rolling_std_24h": 0.026639297604560852,
+        "pm25_lag_168h": 0.0263998880982399,
+        "hour_cos": 0.025958135724067688,
+        "month_cos": 0.02460188791155815,
+        "season_code": 0.021698210388422012
+    }
+}
