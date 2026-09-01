@@ -1,0 +1,133 @@
+{
+    "model": "XGBoost",
+    "baseline": "Persistence",
+    "sensor": 218,
+    "evaluation_method": "Baseline and XGBoost evaluated on the exact same timestamps from XGBoost test predictions.",
+    "results": [
+        {
+            "horizon": "48h",
+            "horizon_hours": 48,
+            "rows_evaluated": 1282,
+            "baseline": {
+                "mae": 47.29733749349973,
+                "rmse": 64.65416162889863,
+                "r2": -0.1844058819121952,
+                "mape": 59.03391179609522
+            },
+            "xgboost": {
+                "mae": 52.31210444539782,
+                "rmse": 72.2716088803649,
+                "r2": -0.47993633208723785,
+                "mape": 47.13351933998799
+            },
+            "xgboost_improvement": {
+                "mae_percent": -10.602641116082463,
+                "rmse_percent": -11.781835939948945
+            },
+            "xgboost_beats_baseline": {
+                "mae": false,
+                "rmse": false
+            }
+        },
+        {
+            "horizon": "72h",
+            "horizon_hours": 72,
+            "rows_evaluated": 1278,
+            "baseline": {
+                "mae": 54.41034428794992,
+                "rmse": 71.05943183791292,
+                "r2": -0.42652692193223385,
+                "mape": 67.96922555084997
+            },
+            "xgboost": {
+                "mae": 59.210500536776216,
+                "rmse": 76.5412824681264,
+                "r2": -0.6551142586620629,
+                "mape": 56.50762420360037
+            },
+            "xgboost_improvement": {
+                "mae_percent": -8.822139083375315,
+                "rmse_percent": -7.714458852862226
+            },
+            "xgboost_beats_baseline": {
+                "mae": false,
+                "rmse": false
+            }
+        },
+        {
+            "horizon": "7d",
+            "horizon_hours": 168,
+            "rows_evaluated": 1264,
+            "baseline": {
+                "mae": 79.2993670886076,
+                "rmse": 96.86974244463161,
+                "r2": -1.6267470292608324,
+                "mape": 101.19195431592847
+            },
+            "xgboost": {
+                "mae": 51.079522828059076,
+                "rmse": 74.27172028393646,
+                "r2": -0.5441480097869877,
+                "mape": 41.122516727704415
+            },
+            "xgboost_improvement": {
+                "mae_percent": 35.58646846325546,
+                "rmse_percent": 23.32825667789055
+            },
+            "xgboost_beats_baseline": {
+                "mae": true,
+                "rmse": true
+            }
+        },
+        {
+            "horizon": "14d",
+            "horizon_hours": 336,
+            "rows_evaluated": 1239,
+            "baseline": {
+                "mae": 68.31773831943323,
+                "rmse": 84.71300682271551,
+                "r2": -0.9771420999141138,
+                "mape": 80.90815707551096
+            },
+            "xgboost": {
+                "mae": 46.9103968479957,
+                "rmse": 62.63102616856828,
+                "r2": -0.08072884886622012,
+                "mape": 49.85441445014599
+            },
+            "xgboost_improvement": {
+                "mae_percent": 31.33496804496547,
+                "rmse_percent": 26.06681250301934
+            },
+            "xgboost_beats_baseline": {
+                "mae": true,
+                "rmse": true
+            }
+        },
+        {
+            "horizon": "30d",
+            "horizon_hours": 720,
+            "rows_evaluated": 1181,
+            "baseline": {
+                "mae": 69.36316680779001,
+                "rmse": 86.21262769140183,
+                "r2": -1.0236424086946125,
+                "mape": 86.02860182275556
+            },
+            "xgboost": {
+                "mae": 52.19139106096528,
+                "rmse": 70.53891641758567,
+                "r2": -0.35472010361180883,
+                "mape": 51.60042702192029
+            },
+            "xgboost_improvement": {
+                "mae_percent": 24.756331835899122,
+                "rmse_percent": 18.180296429335417
+            },
+            "xgboost_beats_baseline": {
+                "mae": true,
+                "rmse": true
+            }
+        }
+    ]
+}

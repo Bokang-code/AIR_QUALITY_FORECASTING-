@@ -1,238 +1,656 @@
-import json
-import logging
-from math import sqrt
+"""
+Evaluation utilities for the Sensor 218 XGBoost PM2.5 forecasting project.
+
+Evaluates the saved XGBoost predictions for:
+    - 48 hours
+    - 72 hours
+    - 7 days
+    - 14 days
+    - 30 days
+
+Outputs:
+    outputs/reports/
+    outputs/figures/
+"""
+
 from pathlib import Path
-from typing import Any, Sequence
+import json
 
 import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import pandas as pd
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
 )
 
 
-def _ensure_directory(path: Path) -> Path:
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+# =============================================================================
+# PATHS
+# =============================================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+FIGURE_DIR = PROJECT_ROOT / "outputs" / "figures"
+
+REPORT_DIR.mkdir(parents=True, exist_ok=True)
+FIGURE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _validate_inputs(
-    y_true: Sequence[float] | pd.Series,
-    y_pred: Sequence[float] | pd.Series,
-) -> tuple[pd.Series, pd.Series]:
-    y_true_series = pd.Series(y_true).reset_index(drop=True)
-    y_pred_series = pd.Series(y_pred).reset_index(drop=True)
+# =============================================================================
+# FORECAST HORIZONS
+# =============================================================================
 
-    if y_true_series.empty or y_pred_series.empty:
-        raise ValueError("y_true and y_pred must not be empty.")
-
-    if len(y_true_series) != len(y_pred_series):
-        raise ValueError("y_true and y_pred must have the same length.")
-
-    return y_true_series, y_pred_series
+HORIZONS = {
+    "48h": 48,
+    "72h": 72,
+    "7d": 168,
+    "14d": 336,
+    "30d": 720,
+}
 
 
-def _default_report_directory() -> Path:
-    return Path(__file__).resolve().parents[1] / "outputs" / "reports"
+# =============================================================================
+# LOAD PREDICTIONS
+# =============================================================================
 
-
-def _default_figure_directory() -> Path:
-    return Path(__file__).resolve().parents[1] / "outputs" / "figures"
-
-
-def evaluate_regression(
-    y_true: Sequence[float] | pd.Series,
-    y_pred: Sequence[float] | pd.Series,
-    output_dir: str | Path | None = None,
-    file_name: str = "evaluation_metrics.json",
-) -> dict[str, float]:
-    """Compute regression metrics and persist them to disk.
-
-    Parameters
-    ----------
-    y_true:
-        Actual target values.
-    y_pred:
-        Predicted target values.
-    output_dir:
-        Optional directory path for saving the metrics file.
-    file_name:
-        Optional output filename for the metrics JSON file.
-
-    Returns
-    -------
-    dict[str, float]
-        Dictionary containing MAE, RMSE, R², and MAPE.
+def load_predictions(horizon_name: str) -> pd.DataFrame:
     """
-    logger.info("Evaluation started.")
-    y_true_series, y_pred_series = _validate_inputs(y_true, y_pred)
+    Load saved XGBoost predictions for a forecast horizon.
+    """
 
-    try:
-        from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-    except ImportError as exc:
-        raise RuntimeError("scikit-learn is required for evaluation") from exc
+    file_path = (
+        REPORT_DIR
+        / f"sensor_218_xgboost_{horizon_name}_predictions.csv"
+    )
 
-    y_true_nonzero = y_true_series.replace(0, pd.NA).abs()
-    percentage_errors = (y_true_series - y_pred_series).abs() / y_true_nonzero
-    percentage_errors = percentage_errors.replace([pd.NA, pd.NaT], pd.NA).dropna()
-    mape = float(percentage_errors.mean() * 100) if not percentage_errors.empty else 0.0
+    if not file_path.exists():
+        raise FileNotFoundError(
+            f"Prediction file not found:\n{file_path}"
+        )
 
-    metrics = {
-        "mae": float(mean_absolute_error(y_true_series, y_pred_series)),
-        "rmse": float(sqrt(mean_squared_error(y_true_series, y_pred_series))),
-        "r2": float(r2_score(y_true_series, y_pred_series)),
-        "mape": mape,
+    df = pd.read_csv(file_path)
+
+    required_columns = {
+        "timestamp",
+        "actual_pm25",
+        "predicted_pm25",
     }
 
-    report_dir = Path(output_dir) if output_dir is not None else _default_report_directory()
-    _ensure_directory(report_dir)
+    missing_columns = required_columns - set(df.columns)
 
-    output_path = report_dir / file_name
-    with open(output_path, "w", encoding="utf-8") as handle:
-        json.dump(metrics, handle, indent=2)
+    if missing_columns:
+        raise ValueError(
+            "Prediction file is missing required columns:\n"
+            + "\n".join(sorted(missing_columns))
+        )
 
-    logger.info("Metrics calculated: %s", metrics)
-    logger.info("Metrics saved to %s", output_path)
-    logger.info("Evaluation completed.")
-    return metrics
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"],
+        utc=True,
+        errors="coerce",
+    )
+
+    df["actual_pm25"] = pd.to_numeric(
+        df["actual_pm25"],
+        errors="coerce",
+    )
+
+    df["predicted_pm25"] = pd.to_numeric(
+        df["predicted_pm25"],
+        errors="coerce",
+    )
+
+    df = df.dropna(
+        subset=[
+            "timestamp",
+            "actual_pm25",
+            "predicted_pm25",
+        ]
+    ).copy()
+
+    df = df.sort_values(
+        "timestamp"
+    ).reset_index(drop=True)
+
+    return df
 
 
-def load_evaluation_report(path: str | Path) -> dict[str, Any]:
-    """Load a previously saved evaluation metrics report."""
-    report_path = Path(path)
-    if not report_path.exists():
-        raise FileNotFoundError(f"Evaluation report not found: {report_path}")
+# =============================================================================
+# CALCULATE METRICS
+# =============================================================================
 
-    with open(report_path, "r", encoding="utf-8") as handle:
-        report = json.load(handle)
+def calculate_metrics(
+    actual: pd.Series,
+    predicted: pd.Series,
+) -> dict:
+    """
+    Calculate regression evaluation metrics.
+    """
 
-    logger.info("Loaded evaluation report from %s", report_path)
-    return report
+    mae = mean_absolute_error(
+        actual,
+        predicted,
+    )
 
+    rmse = np.sqrt(
+        mean_squared_error(
+            actual,
+            predicted,
+        )
+    )
+
+    r2 = r2_score(
+        actual,
+        predicted,
+    )
+
+    nonzero = actual != 0
+
+    if nonzero.sum() > 0:
+        mape = (
+            np.mean(
+                np.abs(
+                    (
+                        actual[nonzero]
+                        - predicted[nonzero]
+                    )
+                    / actual[nonzero]
+                )
+            )
+            * 100
+        )
+    else:
+        mape = np.nan
+
+    return {
+        "mae": float(mae),
+        "rmse": float(rmse),
+        "r2": float(r2),
+        "mape": float(mape),
+    }
+
+
+# =============================================================================
+# EVALUATE ONE HORIZON
+# =============================================================================
+
+def evaluate_horizon(
+    horizon_name: str,
+) -> dict:
+    """
+    Evaluate one XGBoost forecast horizon.
+    """
+
+    print("\n" + "=" * 80)
+    print(
+        f"EVALUATING {horizon_name.upper()} XGBOOST FORECAST"
+    )
+    print("=" * 80)
+
+    df = load_predictions(
+        horizon_name
+    )
+
+    metrics = calculate_metrics(
+        df["actual_pm25"],
+        df["predicted_pm25"],
+    )
+
+    print(
+        f"\nRows evaluated: {len(df):,}"
+    )
+
+    print(
+        f"MAE:  {metrics['mae']:.4f}"
+    )
+
+    print(
+        f"RMSE: {metrics['rmse']:.4f}"
+    )
+
+    print(
+        f"R²:   {metrics['r2']:.4f}"
+    )
+
+    print(
+        f"MAPE: {metrics['mape']:.2f}%"
+    )
+
+    return {
+        "horizon": horizon_name,
+        "horizon_hours": HORIZONS[horizon_name],
+        "rows_evaluated": int(len(df)),
+        "metrics": metrics,
+    }
+
+
+# =============================================================================
+# ACTUAL VS PREDICTED
+# =============================================================================
 
 def plot_actual_vs_predicted(
-    y_true: Sequence[float] | pd.Series,
-    y_pred: Sequence[float] | pd.Series,
-    output_dir: str | Path | None = None,
-    file_name: str = "actual_vs_predicted.png",
+    horizon_name: str,
 ) -> Path:
-    """Plot actual versus predicted values and save the figure."""
-    logger.info("Generating actual vs predicted plot.")
-    y_true_series, y_pred_series = _validate_inputs(y_true, y_pred)
+    """
+    Create actual vs predicted scatter plot.
+    """
 
-    figure_dir = Path(output_dir) if output_dir is not None else _default_figure_directory()
-    _ensure_directory(figure_dir)
+    df = load_predictions(
+        horizon_name
+    )
 
-    min_value = min(y_true_series.min(), y_pred_series.min())
-    max_value = max(y_true_series.max(), y_pred_series.max())
+    plt.figure(
+        figsize=(8, 8)
+    )
 
-    plt.figure(figsize=(8, 8))
-    plt.scatter(y_true_series, y_pred_series, alpha=0.7, edgecolors="k", linewidths=0.5)
-    plt.plot([min_value, max_value], [min_value, max_value], color="red", linestyle="--", linewidth=1)
-    plt.xlabel("Actual Values")
-    plt.ylabel("Predicted Values")
-    plt.title("Actual vs Predicted")
-    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.scatter(
+        df["actual_pm25"],
+        df["predicted_pm25"],
+        alpha=0.5,
+        s=20,
+    )
 
-    output_path = figure_dir / file_name
+    minimum = min(
+        df["actual_pm25"].min(),
+        df["predicted_pm25"].min(),
+    )
+
+    maximum = max(
+        df["actual_pm25"].max(),
+        df["predicted_pm25"].max(),
+    )
+
+    plt.plot(
+        [minimum, maximum],
+        [minimum, maximum],
+        linestyle="--",
+        linewidth=2,
+    )
+
+    plt.xlabel(
+        "Actual PM2.5 (µg/m³)"
+    )
+
+    plt.ylabel(
+        "Predicted PM2.5 (µg/m³)"
+    )
+
+    plt.title(
+        f"XGBoost {horizon_name}: Actual vs Predicted PM2.5"
+    )
+
+    plt.grid(
+        True,
+        linestyle="--",
+        alpha=0.4,
+    )
+
+    output_path = (
+        FIGURE_DIR
+        / f"sensor_218_xgboost_{horizon_name}_actual_vs_predicted.png"
+    )
+
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+
+    plt.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
     plt.close()
 
-    logger.info("Plot generated: %s", output_path)
+    print(
+        f"Saved: {output_path}"
+    )
+
     return output_path
 
+
+# =============================================================================
+# RESIDUAL PLOT
+# =============================================================================
 
 def plot_residuals(
-    y_true: Sequence[float] | pd.Series,
-    y_pred: Sequence[float] | pd.Series,
-    output_dir: str | Path | None = None,
-    file_name: str = "residuals.png",
+    horizon_name: str,
 ) -> Path:
-    """Plot residuals against predicted values and save the figure."""
-    logger.info("Generating residual plot.")
-    y_true_series, y_pred_series = _validate_inputs(y_true, y_pred)
+    """
+    Create residual plot.
+    """
 
-    figure_dir = Path(output_dir) if output_dir is not None else _default_figure_directory()
-    _ensure_directory(figure_dir)
+    df = load_predictions(
+        horizon_name
+    )
 
-    residuals = y_true_series - y_pred_series
+    residuals = (
+        df["actual_pm25"]
+        - df["predicted_pm25"]
+    )
 
-    plt.figure(figsize=(8, 5))
-    plt.scatter(y_pred_series, residuals, alpha=0.7, edgecolors="k", linewidths=0.5)
-    plt.axhline(0, color="red", linestyle="--", linewidth=1)
-    plt.xlabel("Predicted Values")
-    plt.ylabel("Residuals")
-    plt.title("Residuals vs Predicted")
-    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.figure(
+        figsize=(10, 6)
+    )
 
-    output_path = figure_dir / file_name
+    plt.scatter(
+        df["predicted_pm25"],
+        residuals,
+        alpha=0.5,
+        s=20,
+    )
+
+    plt.axhline(
+        0,
+        linestyle="--",
+        linewidth=2,
+    )
+
+    plt.xlabel(
+        "Predicted PM2.5 (µg/m³)"
+    )
+
+    plt.ylabel(
+        "Residual (Actual - Predicted)"
+    )
+
+    plt.title(
+        f"XGBoost {horizon_name}: Residuals"
+    )
+
+    plt.grid(
+        True,
+        linestyle="--",
+        alpha=0.4,
+    )
+
+    output_path = (
+        FIGURE_DIR
+        / f"sensor_218_xgboost_{horizon_name}_residuals.png"
+    )
+
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+
+    plt.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
     plt.close()
 
-    logger.info("Plot generated: %s", output_path)
+    print(
+        f"Saved: {output_path}"
+    )
+
     return output_path
 
 
-def plot_feature_importance(
-    model: Any,
-    feature_names: Sequence[str],
-    output_dir: str | Path | None = None,
-    file_name: str = "feature_importance.png",
-) -> Path | None:
-    """Plot feature importances for models that expose feature_importances_."""
-    logger.info("Generating feature importance plot.")
+# =============================================================================
+# FORECAST TIME SERIES
+# =============================================================================
 
-    if not hasattr(model, "feature_importances_"):
-        logger.warning("Model does not expose feature_importances_. Skipping feature importance plot.")
-        return None
+def plot_forecast(
+    horizon_name: str,
+) -> Path:
+    """
+    Plot actual and predicted PM2.5 across the test period.
+    """
 
-    import numpy as np
+    df = load_predictions(
+        horizon_name
+    )
 
-    importances = getattr(model, "feature_importances_")
-    if len(importances) != len(feature_names):
-        raise ValueError("Feature names length must match model.feature_importances_.")
+    plt.figure(
+        figsize=(14, 6)
+    )
 
-    sorted_indices = np.argsort(importances)[::-1]
-    sorted_names = [feature_names[i] for i in sorted_indices]
-    sorted_importances = importances[sorted_indices]
+    plt.plot(
+        df["timestamp"],
+        df["actual_pm25"],
+        label="Actual",
+        linewidth=1.5,
+    )
 
-    figure_dir = Path(output_dir) if output_dir is not None else _default_figure_directory()
-    _ensure_directory(figure_dir)
+    plt.plot(
+        df["timestamp"],
+        df["predicted_pm25"],
+        label="XGBoost",
+        linewidth=1,
+    )
 
-    plt.figure(figsize=(10, max(4, len(feature_names) * 0.5)))
-    plt.barh(sorted_names, sorted_importances, color="tab:blue")
-    plt.xlabel("Importance")
-    plt.title("Feature Importance")
-    plt.gca().invert_yaxis()
-    plt.grid(axis="x", linestyle="--", alpha=0.5)
+    plt.xlabel(
+        "Timestamp"
+    )
 
-    output_path = figure_dir / file_name
+    plt.ylabel(
+        "PM2.5 (µg/m³)"
+    )
+
+    plt.title(
+        f"Sensor 218: {horizon_name} PM2.5 Forecast"
+    )
+
+    plt.legend()
+
+    plt.grid(
+        True,
+        linestyle="--",
+        alpha=0.4,
+    )
+
+    output_path = (
+        FIGURE_DIR
+        / f"sensor_218_xgboost_{horizon_name}_forecast.png"
+    )
+
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+
+    plt.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
     plt.close()
 
-    logger.info("Plot generated: %s", output_path)
+    print(
+        f"Saved: {output_path}"
+    )
+
     return output_path
 
 
-def load_model(model_path: str | Path):
-    """Load a serialized model from disk using joblib."""
-    try:
-        import joblib
-    except ImportError as exc:
-        raise RuntimeError("joblib is required to load the model") from exc
+# =============================================================================
+# SUMMARY PLOT
+# =============================================================================
 
-    model_file = Path(model_path)
-    if not model_file.exists():
-        raise FileNotFoundError(f"Model file not found: {model_file}")
+def plot_metric_comparison(
+    results: list[dict],
+) -> Path:
+    """
+    Compare MAE and RMSE across forecast horizons.
+    """
 
-    model = joblib.load(model_file)
-    logger.info("Loaded model from %s", model_file)
-    return model
+    horizons = [
+        result["horizon"]
+        for result in results
+    ]
+
+    mae_values = [
+        result["metrics"]["mae"]
+        for result in results
+    ]
+
+    rmse_values = [
+        result["metrics"]["rmse"]
+        for result in results
+    ]
+
+    x = np.arange(
+        len(horizons)
+    )
+
+    width = 0.35
+
+    plt.figure(
+        figsize=(10, 6)
+    )
+
+    plt.bar(
+        x - width / 2,
+        mae_values,
+        width,
+        label="MAE",
+    )
+
+    plt.bar(
+        x + width / 2,
+        rmse_values,
+        width,
+        label="RMSE",
+    )
+
+    plt.xticks(
+        x,
+        horizons,
+    )
+
+    plt.xlabel(
+        "Forecast Horizon"
+    )
+
+    plt.ylabel(
+        "Error"
+    )
+
+    plt.title(
+        "XGBoost Forecast Error by Horizon"
+    )
+
+    plt.legend()
+
+    plt.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.4,
+    )
+
+    output_path = (
+        FIGURE_DIR
+        / "sensor_218_xgboost_metric_comparison.png"
+    )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close()
+
+    print(
+        f"Saved: {output_path}"
+    )
+
+    return output_path
+
+
+# =============================================================================
+# SAVE SUMMARY
+# =============================================================================
+
+def save_summary(
+    results: list[dict],
+) -> Path:
+    """
+    Save evaluation summary as JSON.
+    """
+
+    output_path = (
+        REPORT_DIR
+        / "sensor_218_xgboost_evaluation_summary.json"
+    )
+
+    summary = {
+        "model": "XGBoost",
+        "sensor": 218,
+        "forecast_horizons": HORIZONS,
+        "results": results,
+    }
+
+    with open(
+        output_path,
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            summary,
+            file,
+            indent=4,
+        )
+
+    print(
+        f"\nEvaluation summary saved: {output_path}"
+    )
+
+    return output_path
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def main():
+    print("\n")
+    print("=" * 80)
+    print("SENSOR 218 XGBOOST MODEL EVALUATION")
+    print("=" * 80)
+
+    results = []
+
+    for horizon_name in HORIZONS:
+
+        result = evaluate_horizon(
+            horizon_name
+        )
+
+        results.append(
+            result
+        )
+
+        plot_actual_vs_predicted(
+            horizon_name
+        )
+
+        plot_residuals(
+            horizon_name
+        )
+
+        plot_forecast(
+            horizon_name
+        )
+
+    plot_metric_comparison(
+        results
+    )
+
+    save_summary(
+        results
+    )
+
+    print("\n")
+    print("=" * 80)
+    print("EVALUATION COMPLETE")
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    main()

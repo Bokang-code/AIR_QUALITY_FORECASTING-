@@ -1,0 +1,51 @@
+{
+    "model": "XGBoost",
+    "sensor": 218,
+    "results": [
+        {
+            "horizon": "48h",
+            "horizon_hours": 48,
+            "mae": 52.31210443077146,
+            "rmse": 72.27160888135718,
+            "r2": -0.4799363321278771,
+            "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_48h.pkl",
+            "report_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_48h_report.json"
+        },
+        {
+            "horizon": "72h",
+            "horizon_hours": 72,
+            "mae": 59.210500462849936,
+            "rmse": 76.54128241980754,
+            "r2": -0.6551142565723873,
+            "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_72h.pkl",
+            "report_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_72h_report.json"
+        },
+        {
+            "horizon": "7d",
+            "horizon_hours": 168,
+            "mae": 51.079522807889845,
+            "rmse": 74.2717202954964,
+            "r2": -0.5441480102676624,
+            "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_7d.pkl",
+            "report_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_7d_report.json"
+        },
+        {
+            "horizon": "14d",
+            "horizon_hours": 336,
+            "mae": 46.91039679473146,
+            "rmse": 62.63102614678726,
+            "r2": -0.08072884811453607,
+            "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_14d.pkl",
+            "report_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_14d_report.json"
+        },
+        {
+            "horizon": "30d",
+            "horizon_hours": 720,
+            "mae": 52.1913910286796,
+            "rmse": 70.53891641397075,
+            "r2": -0.3547201034729577,
+            "model_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\models\\sensor_218_xgboost_30d.pkl",
+            "report_path": "C:\\Users\\phxac\\Downloads\\air-quality-forecasting\\outputs\\reports\\sensor_218_xgboost_30d_report.json"
+        }
+    ]
+}

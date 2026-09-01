@@ -1,174 +1,335 @@
-from __future__ import annotations
-
-import json
 import os
-import re
-from pathlib import Path
-from typing import Any
+import time
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 
-try:
-    from dotenv import load_dotenv
-except ImportError:  # pragma: no cover - graceful fallback for minimal environments
-    def load_dotenv() -> bool:
-        return False
 
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
 
 load_dotenv()
 
+API_KEY = os.getenv("OPENAQ_API_KEY")
 
-def ingest_air_quality_data(
-    output_dir: str | Path | None = None,
-    api_key: str | None = None,
-    save_format: str = "csv",
-    endpoint: str = "/v3/parameters/2/latest",
-    base_url: str = "https://api.openaq.org",
-    params: dict[str, Any] | None = None,
-) -> pd.DataFrame:
-    """Fetch air quality data from the OpenAQ API and persist it locally.
+SENSOR_ID = 218
 
-    Parameters
-    ----------
-    output_dir:
-        Directory where the downloaded files will be stored. Defaults to the
-        repository's data/raw folder.
-    api_key:
-        Optional OpenAQ API key. If omitted, the module will fall back to the
-        OPENAQ_API_KEY environment variable.
-    save_format:
-        Output file format, either "csv" or "json".
-    endpoint:
-        OpenAQ API endpoint to request.
-    base_url:
-        Base URL for the OpenAQ API.
-    params:
-        Optional query parameters for the API request.
+START = "2016-02-09T04:00:00Z"
+END = "2017-02-08T03:00:00Z"
+
+BASE_URL = f"https://api.openaq.org/v3/sensors/{SENSOR_ID}/measurements"
+
+LIMIT = 1000
+MAX_PAGES = 15
+
+OUTPUT_FILE = "data/raw/sensor_218_raw.csv"
+
+
+# =============================================================================
+# API HEADERS
+# =============================================================================
+
+HEADERS = {
+    "Accept": "application/json",
+    "X-API-Key": API_KEY,
+}
+
+
+# =============================================================================
+# FETCH DATA
+# =============================================================================
+
+def fetch_sensor_data():
+    """
+    Fetch PM2.5 measurements for Sensor 218 from OpenAQ.
+
+    Returns
+    -------
+    list
+        Raw OpenAQ measurement records.
     """
 
-    output_path = Path(output_dir) if output_dir is not None else Path(__file__).resolve().parents[1] / "data" / "raw"
-    output_path.mkdir(parents=True, exist_ok=True)
+    print("=" * 80)
+    print("OPENAQ SENSOR 218 DATA INGESTION")
+    print("=" * 80)
 
-    resolved_api_key = api_key or os.getenv("OPENAQ_API_KEY")
-    headers = {"Accept": "application/json"}
-    if resolved_api_key:
-        headers["X-API-Key"] = resolved_api_key
+    if not API_KEY:
+        raise ValueError(
+            "OPENAQ_API_KEY was not found. "
+            "Make sure it is defined in the .env file."
+        )
 
-    response = requests.get(
-        f"{base_url.rstrip('/')}{endpoint}",
-        headers=headers,
-        params=params or {},
-        timeout=30,
-    )
-    response.raise_for_status()
-    payload = response.json()
+    all_rows = []
 
-    if not isinstance(payload, dict):
-        raise ValueError("Unexpected API response format. Expected a JSON object.")
+    for page in range(1, MAX_PAGES + 1):
 
-    results = payload.get("results") or payload.get("data") or []
-    if not isinstance(results, list):
-        raise ValueError("Unexpected API response format. Expected a list of results.")
-
-    parameter_map: dict[str, dict[str, str]] = {
-        "1": {"name": "pm10", "unit": "µg/m³"},
-        "2": {"name": "pm25", "unit": "µg/m³"},
-    }
-
-    def infer_endpoint_parameter() -> tuple[str | None, str | None]:
-        match = re.search(r"/v3/parameters/(?P<param_id>\d+)/latest", endpoint)
-        if not match:
-            return None, None
-        param_id = match.group("param_id")
-        mapping = parameter_map.get(param_id)
-        if mapping:
-            return mapping["name"], mapping["unit"]
-        return None, None
-
-    inferred_parameter, inferred_unit = infer_endpoint_parameter()
-
-    def extract_parameter(value: Any) -> Any:
-        if isinstance(value, dict):
-            return value.get("name")
-        if value is None:
-            return inferred_parameter
-        return value
-
-    def extract_unit(value: Any) -> Any:
-        if isinstance(value, dict):
-            return value.get("units")
-        if value is None:
-            return inferred_unit
-        return value
-
-    def extract_datetime(value: Any) -> Any:
-        if isinstance(value, str):
-            return value
-        if isinstance(value, dict):
-            return value.get("utc") or value.get("local")
-        return None
-
-    rows: list[dict[str, Any]] = []
-    for item in results:
-        if not isinstance(item, dict):
-            continue
-
-        latitude = None
-        longitude = None
-        if isinstance(item.get("coordinates"), dict):
-            latitude = item["coordinates"].get("latitude")
-            longitude = item["coordinates"].get("longitude")
-
-        base_record = {
-            "location": item.get("location"),
-            "city": item.get("city"),
-            "country": item.get("country"),
-            "latitude": latitude,
-            "longitude": longitude,
+        params = {
+            "datetime_from": START,
+            "datetime_to": END,
+            "limit": LIMIT,
+            "page": page,
         }
 
-        measurements = item.get("measurements")
-        if isinstance(measurements, list) and measurements:
-            for measurement in measurements:
-                if not isinstance(measurement, dict):
-                    continue
+        response = None
 
-                date_info = measurement.get("date") or {}
-                rows.append(
-                    {
-                        **base_record,
-                        "parameter": extract_parameter(measurement.get("parameter")),
-                        "value": measurement.get("value"),
-                        "unit": extract_unit(measurement.get("unit")),
-                        "date_utc": extract_datetime(date_info),
-                        "raw_measurement": json.dumps(measurement, ensure_ascii=False),
-                    }
+        for attempt in range(3):
+
+            try:
+                response = requests.get(
+                    BASE_URL,
+                    headers=HEADERS,
+                    params=params,
+                    timeout=60,
                 )
-            continue
 
-        if item.get("value") is not None:
-            rows.append(
-                {
-                    **base_record,
-                    "parameter": extract_parameter(item.get("parameter")),
-                    "value": item.get("value"),
-                    "unit": extract_unit(item.get("unit") or item.get("parameter")),
-                    "date_utc": extract_datetime(item.get("datetime") or item.get("date") or item.get("date_utc")),
-                    "raw_measurement": json.dumps(item, ensure_ascii=False),
-                }
-            )
-            continue
+                if response.status_code == 200:
+                    break
 
-        rows.append({**base_record, "parameter": None, "value": None, "unit": None, "date_utc": None})
+                print(
+                    f"Page {page}: HTTP {response.status_code} "
+                    f"(attempt {attempt + 1}/3)"
+                )
 
-    dataframe = pd.DataFrame(rows)
+                time.sleep(3)
 
-    if save_format.lower() == "json":
-        output_file = output_path / "air_quality_data.json"
-        dataframe.to_json(output_file, orient="records", indent=2)
-    else:
-        output_file = output_path / "air_quality_data.csv"
-        dataframe.to_csv(output_file, index=False)
+            except requests.RequestException as error:
 
-    return dataframe
+                print(
+                    f"Page {page}: request error "
+                    f"(attempt {attempt + 1}/3): {error}"
+                )
+
+                time.sleep(3)
+
+        else:
+            print(f"Could not retrieve page {page}.")
+            break
+
+        data = response.json()
+        rows = data.get("results", [])
+
+        print(
+            f"Page {page}: {len(rows)} rows "
+            f"(total {len(all_rows) + len(rows)})"
+        )
+
+        if not rows:
+            break
+
+        all_rows.extend(rows)
+
+        if len(rows) < LIMIT:
+            break
+
+        time.sleep(0.5)
+
+    return all_rows
+
+
+# =============================================================================
+# PREPARE DATA
+# =============================================================================
+
+def prepare_data(rows):
+    """
+    Convert raw OpenAQ responses into a simple timestamp/PM2.5 dataframe.
+    """
+
+    records = []
+
+    for row in rows:
+
+        timestamp = (
+            row.get("period", {})
+            .get("datetimeFrom", {})
+            .get("utc")
+        )
+
+        value = row.get("value")
+
+        records.append(
+            {
+                "timestamp": timestamp,
+                "pm25": value,
+            }
+        )
+
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return df
+
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"],
+        utc=True,
+        errors="coerce",
+    )
+
+    df["pm25"] = pd.to_numeric(
+        df["pm25"],
+        errors="coerce",
+    )
+
+    df = df.sort_values("timestamp")
+
+    return df
+
+
+# =============================================================================
+# CLEAN DATA
+# =============================================================================
+
+def clean_data(df):
+    """
+    Clean raw Sensor 218 data while preserving missing PM2.5 values.
+    """
+
+    print("\n" + "=" * 80)
+    print("CLEANING SENSOR 218 DATA")
+    print("=" * 80)
+
+    if df.empty:
+        return df
+
+    print(f"\nRows before cleaning: {len(df):,}")
+
+    # -------------------------------------------------------------------------
+    # Remove invalid timestamps
+    # -------------------------------------------------------------------------
+
+    invalid_timestamps = df["timestamp"].isna().sum()
+
+    if invalid_timestamps > 0:
+
+        print(
+            f"Removing {invalid_timestamps:,} rows "
+            "with invalid timestamps."
+        )
+
+        df = df.dropna(subset=["timestamp"])
+
+    # -------------------------------------------------------------------------
+    # Remove duplicate timestamps
+    # -------------------------------------------------------------------------
+
+    duplicates = df["timestamp"].duplicated().sum()
+
+    print(f"Duplicate timestamps: {duplicates:,}")
+
+    if duplicates > 0:
+
+        df = df.drop_duplicates(
+            subset="timestamp",
+            keep="first",
+        )
+
+    # -------------------------------------------------------------------------
+    # Restrict to project date range
+    # -------------------------------------------------------------------------
+
+    start = pd.Timestamp(START)
+    end = pd.Timestamp(END)
+
+    df = df[
+        (df["timestamp"] >= start)
+        & (df["timestamp"] < end)
+    ].copy()
+
+    # -------------------------------------------------------------------------
+    # Sort chronologically
+    # -------------------------------------------------------------------------
+
+    df = df.sort_values("timestamp").reset_index(drop=True)
+
+    # -------------------------------------------------------------------------
+    # Keep missing PM2.5 values as NaN
+    # -------------------------------------------------------------------------
+
+    missing = df["pm25"].isna().sum()
+
+    print(f"Missing PM2.5 values: {missing:,}")
+
+    print(f"\nRows after cleaning: {len(df):,}")
+
+    return df
+
+
+# =============================================================================
+# SAVE DATA
+# =============================================================================
+
+def save_data(df, output_file=OUTPUT_FILE):
+    """
+    Save cleaned raw data to CSV.
+    """
+
+    directory = os.path.dirname(output_file)
+
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
+    df.to_csv(
+        output_file,
+        index=False,
+    )
+
+    print("\n" + "=" * 80)
+    print("DATA SAVED")
+    print("=" * 80)
+
+    print(f"\nFile: {output_file}")
+    print(f"Rows: {len(df):,}")
+
+    if not df.empty:
+
+        print(f"Start: {df['timestamp'].min()}")
+        print(f"End:   {df['timestamp'].max()}")
+
+    print("\nColumns:")
+    print(df.columns.tolist())
+
+
+# =============================================================================
+# COMPLETE INGESTION PIPELINE
+# =============================================================================
+
+def run_ingestion(output_file=OUTPUT_FILE):
+    """
+    Run the complete data ingestion process.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Cleaned Sensor 218 dataframe.
+    """
+
+    rows = fetch_sensor_data()
+
+    if not rows:
+        raise RuntimeError("No data was retrieved from OpenAQ.")
+
+    df = prepare_data(rows)
+
+    df = clean_data(df)
+
+    save_data(df, output_file)
+
+    print("\n" + "=" * 80)
+    print("INGESTION COMPLETE")
+    print("=" * 80)
+
+    return df
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def main():
+    run_ingestion()
+
+
+if __name__ == "__main__":
+    main()
