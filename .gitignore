@@ -1,8 +1,24 @@
+# Python
 .venv/
-.env
 __pycache__/
 *.pyc
+.pytest_cache/
 .ipynb_checkpoints/
+
+# Environment / secrets
+.env
+
+# Logs
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large generated ML artifacts
 data/processed/
 models/
-logs/
