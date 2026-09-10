@@ -9,6 +9,11 @@ from sklearn.metrics import (
 )
 from xgboost import XGBRegressor
 
+try:
+    from config import FORECAST_HORIZONS
+except ImportError:  # pragma: no cover
+    from src.v4.config import FORECAST_HORIZONS
+
 
 # ============================================================
 # V4-D: TEMPORAL + METEOROLOGY + CO-POLLUTANTS + SPATIAL
@@ -41,14 +46,7 @@ REPORT_DIR.mkdir(
 # FORECAST HORIZONS
 # ============================================================
 
-HORIZONS = {
-    "24h": 24,
-    "48h": 48,
-    "72h": 72,
-    "7d": 168,
-    "14d": 336,
-    "30d": 720,
-}
+HORIZONS = FORECAST_HORIZONS
 
 
 # ============================================================
@@ -379,83 +377,30 @@ def calculate_metrics(
 
 
 # ============================================================
-# PURGED TIME SPLIT
+# HELPERS
 # ============================================================
 
-def create_purged_splits(
-    data,
-    target_column,
-    horizon,
-):
+def create_purged_splits(data, target_column, horizon):
+    usable = data[data[target_column].notna()].copy()
 
-    # --------------------------------------------------------
-    # Remove rows where target does not exist.
-    # --------------------------------------------------------
+    train_cutoff = pd.Timestamp("2020-01-01") - pd.Timedelta(hours=horizon)
+    validation_cutoff = pd.Timestamp("2021-01-01") - pd.Timedelta(hours=horizon)
 
-    usable = data[
-        data[target_column].notna()
-    ].copy()
+    train = usable[usable["timestamp"] < train_cutoff].copy()
+    validation = usable[(usable["timestamp"] >= pd.Timestamp("2020-01-01")) & (usable["timestamp"] < validation_cutoff)].copy()
+    test = usable[usable["timestamp"] >= pd.Timestamp("2021-01-01")].copy()
+
+    return train, validation, test
 
 
-    # --------------------------------------------------------
-    # Training:
-    # timestamp < 2020-01-01 - horizon
-    #
-    # Validation:
-    # 2020-01-01 <= timestamp
-    # < 2021-01-01 - horizon
-    #
-    # Test:
-    # timestamp >= 2021-01-01
-    # --------------------------------------------------------
-
-    train_cutoff = (
-        pd.Timestamp("2020-01-01")
-        - pd.Timedelta(
-            hours=horizon
-        )
-    )
-
-    validation_cutoff = (
-        pd.Timestamp("2021-01-01")
-        - pd.Timedelta(
-            hours=horizon
-        )
-    )
-
-
-    train = usable[
-        usable["timestamp"]
-        < train_cutoff
-    ].copy()
-
-    validation = usable[
-        (
-            usable["timestamp"]
-            >= pd.Timestamp(
-                "2020-01-01"
-            )
-        )
-        &
-        (
-            usable["timestamp"]
-            < validation_cutoff
-        )
-    ].copy()
-
-    test = usable[
-        usable["timestamp"]
-        >= pd.Timestamp(
-            "2021-01-01"
-        )
-    ].copy()
-
-
-    return (
-        train,
-        validation,
-        test,
-    )
+def prepare_model_inputs(train_df, validation_df, test_df, target_column):
+    X_train = train_df[FEATURE_COLUMNS]
+    y_train = train_df[target_column]
+    X_validation = validation_df[FEATURE_COLUMNS]
+    y_validation = validation_df[target_column]
+    X_test = test_df[FEATURE_COLUMNS]
+    y_test = test_df[target_column]
+    return X_train, y_train, X_validation, y_validation, X_test, y_test
 
 
 # ============================================================
@@ -464,396 +409,99 @@ def create_purged_splits(
 
 all_results = []
 
-
 for horizon_name, horizon in HORIZONS.items():
-
+    print("=" * 70)
+    print(f"V4-D: TRAINING {horizon_name}")
     print("=" * 70)
 
-    print(
-        f"V4-D: TRAINING {horizon_name}"
-    )
-
-    print("=" * 70)
-
-
-    target_column = (
-        f"target_pm25_{horizon_name}"
-    )
-
-
+    target_column = f"target_pm25_{horizon_name}"
     if target_column not in df.columns:
+        raise ValueError(f"Target column not found: {target_column}")
 
-        raise ValueError(
-            f"Target column not found: "
-            f"{target_column}"
-        )
+    train_df, validation_df, test_df = create_purged_splits(df, target_column, horizon)
 
+    print(f"Train samples: {len(train_df)}")
+    print(f"Validation samples: {len(validation_df)}")
+    print(f"Test samples: {len(test_df)}")
 
-    # --------------------------------------------------------
-    # Create purged train / validation / test sets
-    # --------------------------------------------------------
-
-    train_df, validation_df, test_df = (
-        create_purged_splits(
-            df,
-            target_column,
-            horizon,
-        )
-    )
-
-
-    print(
-        f"Train samples: "
-        f"{len(train_df)}"
-    )
-
-    print(
-        f"Validation samples: "
-        f"{len(validation_df)}"
-    )
-
-    print(
-        f"Test samples: "
-        f"{len(test_df)}"
-    )
-
-
-    # --------------------------------------------------------
-    # Features / targets
-    # --------------------------------------------------------
-
-    X_train = train_df[
-        FEATURE_COLUMNS
-    ]
-
-    y_train = train_df[
-        target_column
-    ]
-
-    X_validation = validation_df[
-        FEATURE_COLUMNS
-    ]
-
-    y_validation = validation_df[
-        target_column
-    ]
-
-    X_test = test_df[
-        FEATURE_COLUMNS
-    ]
-
-    y_test = test_df[
-        target_column
-    ]
-
-
-    # --------------------------------------------------------
-    # Train
-    # --------------------------------------------------------
-
-    print()
-
-    print(
-        "Training XGBoost..."
-    )
-
-    model = XGBRegressor(
-        **XGB_PARAMS
-    )
-
-    model.fit(
-        X_train,
-        y_train,
-        eval_set=[
-            (
-                X_validation,
-                y_validation,
-            )
-        ],
-        verbose=False,
-    )
-
-
-    # --------------------------------------------------------
-    # Predictions
-    # --------------------------------------------------------
-
-    train_predictions = model.predict(
-        X_train
-    )
-
-    validation_predictions = (
-        model.predict(
-            X_validation
-        )
-    )
-
-    test_predictions = model.predict(
-        X_test
-    )
-
-
-    # --------------------------------------------------------
-    # Metrics
-    # --------------------------------------------------------
-
-    train_metrics = calculate_metrics(
-        y_train,
-        train_predictions,
-    )
-
-    validation_metrics = calculate_metrics(
-        y_validation,
-        validation_predictions,
-    )
-
-    test_metrics = calculate_metrics(
-        y_test,
-        test_predictions,
-    )
-
-
-    print()
-
-    print(
-        "Validation:"
-    )
-
-    print(
-        f"  MAE  : "
-        f"{validation_metrics['mae']:.4f}"
-    )
-
-    print(
-        f"  RMSE : "
-        f"{validation_metrics['rmse']:.4f}"
-    )
-
-    print(
-        f"  R²   : "
-        f"{validation_metrics['r2']:.4f}"
-    )
-
-
-    print()
-
-    print(
-        "TEST:"
-    )
-
-    print(
-        f"  MAE  : "
-        f"{test_metrics['mae']:.4f}"
-    )
-
-    print(
-        f"  RMSE : "
-        f"{test_metrics['rmse']:.4f}"
-    )
-
-    print(
-        f"  R²   : "
-        f"{test_metrics['r2']:.4f}"
-    )
-
-
-    # --------------------------------------------------------
-    # Save model
-    # --------------------------------------------------------
-
-    model_file = (
-        MODEL_DIR
-        / (
-            "xgboost_"
-            "temporal_meteorology_"
-            "copollutants_spatial_"
-            f"{horizon_name}_purged.joblib"
-        )
-    )
-
-    joblib.dump(
-        model,
-        model_file,
-    )
-
-
-    # --------------------------------------------------------
-    # Save predictions
-    # --------------------------------------------------------
-
-    prediction_file = (
-        REPORT_DIR
-        / (
-            "temporal_meteorology_"
-            "copollutants_spatial_"
-            f"{horizon_name}_purged_predictions.csv"
-        )
-    )
-
-
-    prediction_df = test_df[
-        [
-            "timestamp",
-            "station_code",
-            "station_name",
-            "pm25",
-            target_column,
-        ]
-    ].copy()
-
-
-    prediction_df[
-        "prediction"
-    ] = test_predictions
-
-
-    prediction_df[
-        "residual"
-    ] = (
-        prediction_df[
-            target_column
-        ]
-        - prediction_df[
-            "prediction"
-        ]
-    )
-
-
-    prediction_df.to_csv(
-        prediction_file,
-        index=False,
-    )
-
-
-    # --------------------------------------------------------
-    # Store summary
-    # --------------------------------------------------------
-
-    all_results.append({
-        "horizon": horizon_name,
-        "horizon_hours": horizon,
-
-        "feature_count": len(
-            FEATURE_COLUMNS
-        ),
-
-        "train_samples": len(
-            train_df
-        ),
-
-        "validation_samples": len(
-            validation_df
-        ),
-
-        "test_samples": len(
-            test_df
-        ),
-
-        "train_mae": train_metrics[
-            "mae"
-        ],
-
-        "train_rmse": train_metrics[
-            "rmse"
-        ],
-
-        "train_r2": train_metrics[
-            "r2"
-        ],
-
-        "validation_mae": validation_metrics[
-            "mae"
-        ],
-
-        "validation_rmse": validation_metrics[
-            "rmse"
-        ],
-
-        "validation_r2": validation_metrics[
-            "r2"
-        ],
-
-        "test_mae": test_metrics[
-            "mae"
-        ],
-
-        "test_rmse": test_metrics[
-            "rmse"
-        ],
-
-        "test_r2": test_metrics[
-            "r2"
-        ],
-    })
-
-
-    print()
-
-    print(
-        f"Model saved: {model_file}"
-    )
-
-    print(
-        f"Predictions saved: "
-        f"{prediction_file}"
+    X_train, y_train, X_validation, y_validation, X_test, y_test = prepare_model_inputs(
+        train_df, validation_df, test_df, target_column
     )
 
     print()
+    print("Training XGBoost...")
+    model = XGBRegressor(**XGB_PARAMS)
+    model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)], verbose=False)
 
+    train_predictions = model.predict(X_train)
+    validation_predictions = model.predict(X_validation)
+    test_predictions = model.predict(X_test)
 
-# ============================================================
-# SAVE RESULTS
-# ============================================================
+    train_metrics = calculate_metrics(y_train, train_predictions)
+    validation_metrics = calculate_metrics(y_validation, validation_predictions)
+    test_metrics = calculate_metrics(y_test, test_predictions)
 
-results_df = pd.DataFrame(
-    all_results
-)
+    print()
+    print("Validation:")
+    print(f"  MAE  : {validation_metrics['mae']:.4f}")
+    print(f"  RMSE : {validation_metrics['rmse']:.4f}")
+    print(f"  R²   : {validation_metrics['r2']:.4f}")
 
-results_file = (
-    REPORT_DIR
-    / (
-        "temporal_meteorology_"
-        "copollutants_spatial_"
-        "xgboost_purged_results.csv"
+    print()
+    print("TEST:")
+    print(f"  MAE  : {test_metrics['mae']:.4f}")
+    print(f"  RMSE : {test_metrics['rmse']:.4f}")
+    print(f"  R²   : {test_metrics['r2']:.4f}")
+
+    model_file = MODEL_DIR / (
+        "xgboost_temporal_meteorology_copollutants_spatial_"
+        f"{horizon_name}_purged.joblib"
     )
-)
+    joblib.dump(model, model_file)
 
-results_df.to_csv(
-    results_file,
-    index=False,
-)
+    prediction_file = REPORT_DIR / (
+        "temporal_meteorology_copollutants_spatial_"
+        f"{horizon_name}_purged_predictions.csv"
+    )
 
+    prediction_df = test_df[["timestamp", "station_code", "station_name", "pm25", target_column]].copy()
+    prediction_df["prediction"] = test_predictions
+    prediction_df["residual"] = prediction_df[target_column] - prediction_df["prediction"]
+    prediction_df.to_csv(prediction_file, index=False)
 
-# ============================================================
-# FINAL SUMMARY
-# ============================================================
+    all_results.append(
+        {
+            "horizon": horizon_name,
+            "horizon_hours": horizon,
+            "feature_count": len(FEATURE_COLUMNS),
+            "train_samples": len(train_df),
+            "validation_samples": len(validation_df),
+            "test_samples": len(test_df),
+            "train_mae": train_metrics["mae"],
+            "train_rmse": train_metrics["rmse"],
+            "train_r2": train_metrics["r2"],
+            "validation_mae": validation_metrics["mae"],
+            "validation_rmse": validation_metrics["rmse"],
+            "validation_r2": validation_metrics["r2"],
+            "test_mae": test_metrics["mae"],
+            "test_rmse": test_metrics["rmse"],
+            "test_r2": test_metrics["r2"],
+        }
+    )
+
+    print()
+    print(f"Model saved: {model_file}")
+    print(f"Predictions saved: {prediction_file}")
+    print()
+
+results_df = pd.DataFrame(all_results)
+results_file = REPORT_DIR / "temporal_meteorology_copollutants_spatial_xgboost_purged_results.csv"
+results_df.to_csv(results_file, index=False)
 
 print("=" * 70)
-
-print(
-    "V4-D TRAINING COMPLETE"
-)
-
+print("V4-D TRAINING COMPLETE")
 print("=" * 70)
-
 print()
-
-print(
-    results_df[
-        [
-            "horizon",
-            "test_mae",
-            "test_rmse",
-            "test_r2",
-        ]
-    ].to_string(
-        index=False
-    )
-)
-
+print(results_df[["horizon", "test_mae", "test_rmse", "test_r2"]].to_string(index=False))
 print()
-
-print(
-    f"Results saved to: "
-    f"{results_file}"
-)
+print(f"Results saved to: {results_file}")

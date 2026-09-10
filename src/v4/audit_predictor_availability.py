@@ -2,6 +2,11 @@ from pathlib import Path
 
 import pandas as pd
 
+try:
+    from config import FORECAST_HORIZONS
+except ImportError:  # pragma: no cover
+    from src.v4.config import FORECAST_HORIZONS
+
 
 # ============================================================
 # SETTINGS
@@ -30,13 +35,7 @@ PREDICTORS = [
 ]
 
 # Forecast horizons
-HORIZONS = {
-    "48h": 48,
-    "72h": 72,
-    "7d": 168,
-    "14d": 336,
-    "30d": 720,
-}
+HORIZONS = {name: hours for name, hours in FORECAST_HORIZONS.items() if name != "24h"}
 
 # 3136A has a major PM2.5 outage during 2016.
 EXCLUDE_STATION_YEAR = {
@@ -233,290 +232,92 @@ def audit_station(file_path, station_code):
 # MAIN
 # ============================================================
 
+def summarize_direct_missingness(files):
+    direct_records = []
+
+    for file_path in files:
+        station_code = file_path.stem
+        df = pd.read_excel(file_path)
+        df["timestamp"] = build_timestamp(df)
+        df = df.dropna(subset=["timestamp"]).copy()
+        df = df[(df["timestamp"] >= pd.Timestamp(START_DATE)) & (df["timestamp"] <= pd.Timestamp(END_DATE))].copy()
+
+        if station_code == "3136A":
+            df = df[df["timestamp"].dt.year != 2016].copy()
+
+        for predictor in PREDICTORS:
+            missing = df[predictor].isna().sum()
+            total = len(df)
+            direct_records.append(
+                {
+                    "station_code": station_code,
+                    "station_name": STATION_NAMES.get(station_code, "Unknown"),
+                    "predictor": predictor,
+                    "total_rows": total,
+                    "missing": int(missing),
+                    "missing_pct": (missing / total * 100 if total > 0 else 0),
+                }
+            )
+
+    return pd.DataFrame(direct_records)
+
+
 def main():
 
     print("\n" + "=" * 80)
     print("PREDICTOR AVAILABILITY AUDIT")
     print("=" * 80)
-
-    print(
-        f"Study period: "
-        f"{START_DATE} → {END_DATE}"
-    )
-
+    print(f"Study period: {START_DATE} → {END_DATE}")
     print("\nPredictors:")
-
     for predictor in PREDICTORS:
-
-        print(
-            f"  - {predictor}"
-        )
+        print(f"  - {predictor}")
 
     print("\nHorizons:")
-
     for name, hours in HORIZONS.items():
+        print(f"  - {name}: {hours} hours")
 
-        print(
-            f"  - {name}: {hours} hours"
-        )
+    print("\nSpecial exclusion:")
+    print("  3136A (LQXQ) — 2016")
+    print("\nThis audit does NOT modify the raw data.")
 
-    print(
-        "\nSpecial exclusion:"
-    )
-
-    print(
-        "  3136A (LQXQ) — 2016"
-    )
-
-    print(
-        "\nThis audit does NOT modify the raw data."
-    )
-
-    # --------------------------------------------------------
-    # Find files
-    # --------------------------------------------------------
-
-    files = sorted(
-        DATA_DIR.glob("*.xlsx")
-    )
-
+    files = sorted(DATA_DIR.glob("*.xlsx"))
     if not files:
-
-        print(
-            "\nERROR: No Excel files found."
-        )
-
+        print("\nERROR: No Excel files found.")
         return
 
     all_results = []
-
-    # --------------------------------------------------------
-    # Process stations
-    # --------------------------------------------------------
-
     for file_path in files:
-
         station_code = file_path.stem
-
-        print(
-            f"\nProcessing "
-            f"{station_code} "
-            f"({STATION_NAMES.get(station_code, 'Unknown')})..."
-        )
-
+        print(f"\nProcessing {station_code} ({STATION_NAMES.get(station_code, 'Unknown')})...")
         try:
-
-            result = audit_station(
-                file_path,
-                station_code
-            )
-
+            result = audit_station(file_path, station_code)
             all_results.append(result)
-
         except Exception as e:
-
-            print(
-                f"ERROR: {e}"
-            )
+            print(f"ERROR: {e}")
 
     if not all_results:
-
-        print(
-            "\nNo results generated."
-        )
-
+        print("\nNo results generated.")
         return
 
-    results_df = pd.concat(
-        all_results,
-        ignore_index=True
-    )
+    results_df = pd.concat(all_results, ignore_index=True)
+    detailed_path = REPORT_DIR / "predictor_availability_by_year.csv"
+    results_df.to_csv(detailed_path, index=False)
+    print(f"\nSaved: {detailed_path}")
 
-    # ========================================================
-    # SAVE DETAILED RESULTS
-    # ========================================================
+    print("\n" + "=" * 80)
+    print("OVERALL PREDICTOR MISSINGNESS")
+    print("=" * 80)
 
-    detailed_path = (
-        REPORT_DIR
-        / "predictor_availability_by_year.csv"
-    )
-
-    results_df.to_csv(
-        detailed_path,
-        index=False
-    )
-
-    print(
-        f"\nSaved: {detailed_path}"
-    )
-
-    # ========================================================
-    # OVERALL PREDICTOR MISSINGNESS
-    # ========================================================
-
-    print(
-        "\n" + "=" * 80
-    )
-
-    print(
-        "OVERALL PREDICTOR MISSINGNESS"
-    )
-
-    print(
-        "=" * 80
-    )
-
-    overall = (
-        results_df[
-            [
-                "station_code",
-                "station_name",
-                "predictor",
-                "total_rows",
-                "predictor_available_samples",
-            ]
-        ]
-        .drop_duplicates()
-    )
-
-    # Aggregate carefully because each horizon/year
-    # repeats the same predictor observations.
-    overall_simple = (
-        results_df
-        .groupby(
-            [
-                "station_code",
-                "station_name",
-                "predictor",
-            ]
-        )
-        .agg(
-            total_rows=(
-                "total_rows",
-                "sum"
-            ),
-            predictor_available=(
-                "predictor_available_samples",
-                "sum"
-            )
-        )
-        .reset_index()
-    )
-
-    overall_simple["missing_pct"] = (
-        1
-        - (
-            overall_simple["predictor_available"]
-            / overall_simple["total_rows"]
-        )
-    ) * 100
-
-    # Because each observation is repeated for every horizon/year,
-    # calculate the actual missingness directly from the source
-    # data instead for display.
-
-    direct_records = []
-
-    for file_path in files:
-
-        station_code = file_path.stem
-
-        df = pd.read_excel(file_path)
-
-        df["timestamp"] = build_timestamp(df)
-
-        df = df.dropna(
-            subset=["timestamp"]
-        ).copy()
-
-        df = df[
-            (df["timestamp"] >= pd.Timestamp(START_DATE))
-            & (df["timestamp"] <= pd.Timestamp(END_DATE))
-        ].copy()
-
-        # Exclude 3136A 2016
-        if station_code == "3136A":
-
-            df = df[
-                df["timestamp"].dt.year != 2016
-            ].copy()
-
-        for predictor in PREDICTORS:
-
-            missing = df[predictor].isna().sum()
-
-            total = len(df)
-
-            direct_records.append(
-                {
-                    "station_code": station_code,
-                    "station_name": STATION_NAMES.get(
-                        station_code,
-                        "Unknown"
-                    ),
-                    "predictor": predictor,
-                    "total_rows": total,
-                    "missing": int(missing),
-                    "missing_pct": (
-                        missing
-                        / total
-                        * 100
-                        if total > 0
-                        else 0
-                    ),
-                }
-            )
-
-    direct_missingness = pd.DataFrame(
-        direct_records
-    )
-
-    print(
-        "\nMissingness after excluding "
-        "3136A-2016:"
-    )
-
-    for station_code in sorted(
-        direct_missingness["station_code"].unique()
-    ):
-
-        station_df = direct_missingness[
-            direct_missingness["station_code"]
-            == station_code
-        ]
-
-        station_name = station_df[
-            "station_name"
-        ].iloc[0]
-
-        print(
-            f"\n{station_code} ({station_name})"
-        )
-
+    direct_missingness = summarize_direct_missingness(files)
+    print("\nMissingness after excluding 3136A-2016:")
+    for station_code in sorted(direct_missingness["station_code"].unique()):
+        station_df = direct_missingness[direct_missingness["station_code"] == station_code]
+        station_name = station_df["station_name"].iloc[0]
+        print(f"\n{station_code} ({station_name})")
         for _, row in station_df.iterrows():
+            print(f"  {row['predictor']:>6}: {row['missing_pct']:.2f}%")
 
-            print(
-                f"  {row['predictor']:>6}: "
-                f"{row['missing_pct']:.2f}%"
-            )
-
-    # ========================================================
-    # FULL FEATURE SET AVAILABILITY
-    # ========================================================
-    #
-    # This is the most important part.
-    #
-    # A sample is "full-feature usable" if:
-    #
-    #   current PM2.5 exists
-    #   future PM2.5 exists
-    #   ALL predictors exist
-    #
-    # This tells us how many samples survive when we use
-    # every pollutant + every weather variable together.
-    # ========================================================
-
-    full_feature_records = []
+    print("\nDone.")
 
     print(
         "\n" + "=" * 80

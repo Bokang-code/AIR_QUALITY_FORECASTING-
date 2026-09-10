@@ -246,6 +246,42 @@ def load_station(station_code: str, station_info: dict) -> pd.DataFrame:
 
 
 # ============================================================
+# HELPERS
+# ============================================================
+
+def exclude_station_year(df, station_code):
+    if station_code != "3136A":
+        return df
+
+    exclusion_mask = df["timestamp"].dt.year == 2016
+    excluded_rows = int(exclusion_mask.sum())
+
+    if excluded_rows > 0:
+        print(f"  Excluding {excluded_rows:,} rows from {station_code} for 2016.")
+        df = df.loc[~exclusion_mask].copy()
+
+    return df
+
+
+def print_station_summary(df, station_code):
+    print(f"  {station_code} ({STATIONS[station_code]['name']}): {len(df):,} rows")
+    print(f"    {df['timestamp'].min()} -> {df['timestamp'].max()}")
+    print(f"    PM2.5 missing: {df['pm25'].isna().sum():,} ({df['pm25'].isna().mean() * 100:.2f}%)")
+
+
+def drop_duplicate_station_timestamps(df):
+    duplicate_mask = df.duplicated(subset=["station_code", "timestamp"], keep=False)
+    duplicate_count = int(duplicate_mask.sum())
+
+    if duplicate_count > 0:
+        print(f"\nWARNING: Found {duplicate_count:,} duplicate station timestamps.")
+        print("Keeping the first occurrence.")
+        df = df.drop_duplicates(subset=["station_code", "timestamp"], keep="first").reset_index(drop=True)
+
+    return df
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -258,127 +294,23 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     all_stations = []
-
     total_rows_before_exclusion = 0
     total_rows_excluded = 0
 
-    # --------------------------------------------------------
-    # Load all stations
-    # --------------------------------------------------------
-
     for station_code, station_info in STATIONS.items():
+        df = load_station(station_code, station_info)
 
-        df = load_station(
-            station_code,
-            station_info,
-        )
-
+        total_rows_before_exclusion += len(df)
         rows_before = len(df)
-
-        total_rows_before_exclusion += rows_before
-
-        # ----------------------------------------------------
-        # Special exclusion:
-        #
-        # 3136A has a very large PM2.5 outage during 2016.
-        # Exclude ONLY this station during ONLY this year.
-        # ----------------------------------------------------
-
-        if station_code == "3136A":
-
-            exclusion_mask = df["timestamp"].dt.year == 2016
-
-            excluded = exclusion_mask.sum()
-
-            if excluded > 0:
-
-                print(
-                    f"  Excluding {excluded:,} rows from "
-                    f"{station_code} for 2016."
-                )
-
-                df = df.loc[~exclusion_mask].copy()
-
-                total_rows_excluded += excluded
-
-        # ----------------------------------------------------
-        # Station summary
-        # ----------------------------------------------------
-
-        print(
-            f"  {station_code} ({STATIONS[station_code]['name']}): "
-            f"{len(df):,} rows"
-        )
-
-        print(
-            f"    {df['timestamp'].min()} "
-            f"-> {df['timestamp'].max()}"
-        )
-
-        print(
-            f"    PM2.5 missing: "
-            f"{df['pm25'].isna().sum():,} "
-            f"({df['pm25'].isna().mean() * 100:.2f}%)"
-        )
-
+        df = exclude_station_year(df, station_code)
+        total_rows_excluded += rows_before - len(df)
+        print_station_summary(df, station_code)
         all_stations.append(df)
 
-    # --------------------------------------------------------
-    # Combine
-    # --------------------------------------------------------
-
-    master = pd.concat(
-        all_stations,
-        ignore_index=True,
-    )
-
-    # --------------------------------------------------------
-    # Sort master dataset
-    # --------------------------------------------------------
-
-    master = master.sort_values(
-        ["timestamp", "station_code"]
-    ).reset_index(drop=True)
-
-    # --------------------------------------------------------
-    # Remove duplicate station timestamps if any
-    # --------------------------------------------------------
-
-    duplicate_mask = master.duplicated(
-        subset=["station_code", "timestamp"],
-        keep=False,
-    )
-
-    duplicate_count = duplicate_mask.sum()
-
-    if duplicate_count > 0:
-
-        print(
-            f"\nWARNING: Found {duplicate_count:,} "
-            f"duplicate station timestamps."
-        )
-
-        print(
-            "Keeping the first occurrence."
-        )
-
-        master = master.drop_duplicates(
-            subset=["station_code", "timestamp"],
-            keep="first",
-        ).reset_index(drop=True)
-
-    # --------------------------------------------------------
-    # Save
-    # --------------------------------------------------------
-
-    master.to_csv(
-        OUTPUT_FILE,
-        index=False,
-    )
-
-    # ========================================================
-    # FINAL AUDIT
-    # ========================================================
+    master = pd.concat(all_stations, ignore_index=True)
+    master = master.sort_values(["timestamp", "station_code"]).reset_index(drop=True)
+    master = drop_duplicate_station_timestamps(master)
+    master.to_csv(OUTPUT_FILE, index=False)
 
     print("\n" + "=" * 70)
     print("MASTER DATASET CREATED")
@@ -386,75 +318,37 @@ def main():
 
     print(f"\nOutput:")
     print(OUTPUT_FILE)
-
     print(f"\nRows before special exclusion: {total_rows_before_exclusion:,}")
     print(f"Rows excluded:                  {total_rows_excluded:,}")
     print(f"Rows in master dataset:         {len(master):,}")
-
     print(f"\nColumns: {len(master.columns)}")
 
     print("\nStations:")
-
     station_summary = (
-        master.groupby(
-            ["station_code", "station_name"]
-        )
-        .agg(
-            rows=("timestamp", "size"),
-            start=("timestamp", "min"),
-            end=("timestamp", "max"),
-            pm25_missing=("pm25", lambda x: x.isna().sum()),
-        )
+        master.groupby(["station_code", "station_name"])
+        .agg(rows=("timestamp", "size"), start=("timestamp", "min"), end=("timestamp", "max"), pm25_missing=("pm25", lambda x: x.isna().sum()))
         .reset_index()
     )
-
-    station_summary["pm25_missing_pct"] = (
-        station_summary["pm25_missing"]
-        / station_summary["rows"]
-        * 100
-    )
-
-    print(
-        station_summary.to_string(index=False)
-    )
+    station_summary["pm25_missing_pct"] = station_summary["pm25_missing"] / station_summary["rows"] * 100
+    print(station_summary.to_string(index=False))
 
     print("\nMissing values:")
-
-    missing = master.isna().sum()
-
-    missing = missing[missing > 0].sort_values(
-        ascending=False
-    )
-
+    missing = master.isna().sum().loc[lambda s: s > 0].sort_values(ascending=False)
     if len(missing) == 0:
         print("No missing values.")
     else:
-        missing_table = pd.DataFrame(
-            {
-                "missing": missing,
-                "percentage": (
-                    missing / len(master) * 100
-                ),
-            }
-        )
-
-        print(
-            missing_table.to_string()
-        )
+        missing_table = pd.DataFrame({"missing": missing, "percentage": missing / len(master) * 100})
+        print(missing_table.to_string())
 
     print("\nTimestamp range:")
     print(f"Start: {master['timestamp'].min()}")
     print(f"End:   {master['timestamp'].max()}")
-
     print("\nDataset shape:")
     print(master.shape)
-
     print("\nFirst 5 rows:")
     print(master.head().to_string(index=False))
-
     print("\nLast 5 rows:")
     print(master.tail().to_string(index=False))
-
     print("\nDone.")
 
 

@@ -4,6 +4,11 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+try:
+    from config import FORECAST_HORIZONS, TRAIN_END, VALIDATION_END
+except ImportError:  # pragma: no cover
+    from src.v4.config import FORECAST_HORIZONS, TRAIN_END, VALIDATION_END
+
 
 # ============================================================
 # PATHS
@@ -37,25 +42,10 @@ STATION_FILE = (
 
 
 # ============================================================
-# FORECAST HORIZONS
+# FORECAST HORIZONS / DATA SPLIT
 # ============================================================
 
-HORIZONS = {
-    "24h": 24,
-    "48h": 48,
-    "72h": 72,
-    "7d": 168,
-    "14d": 336,
-    "30d": 720,
-}
-
-
-# ============================================================
-# DATA SPLIT
-# ============================================================
-
-TRAIN_END = "2020-01-01"
-VALIDATION_END = "2021-01-01"
+HORIZONS = FORECAST_HORIZONS
 
 
 # ============================================================
@@ -83,6 +73,43 @@ def calculate_metrics(y_true, y_pred):
 
 
 # ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+def prepare_persistence_subset(df, target_column):
+    subset = df[["timestamp", "station_code", "pm25", target_column]].copy()
+    subset = subset.rename(columns={target_column: "actual", "pm25": "prediction"})
+    return subset.dropna(subset=["prediction", "actual"]).copy()
+
+
+def create_time_splits(subset):
+    train = subset[subset["timestamp"] < TRAIN_END].copy()
+    validation = subset[(subset["timestamp"] >= TRAIN_END) & (subset["timestamp"] < VALIDATION_END)].copy()
+    test = subset[subset["timestamp"] >= VALIDATION_END].copy()
+    return train, validation, test
+
+
+def append_station_metrics(station_results, horizon_name, horizon_hours, test_df):
+    for station, station_test in test_df.groupby("station_code"):
+        if len(station_test) < 2:
+            continue
+
+        station_metrics = calculate_metrics(station_test["actual"], station_test["prediction"])
+        station_results.append(
+            {
+                "horizon": horizon_name,
+                "horizon_hours": horizon_hours,
+                "station_code": station,
+                "station_name": station_test["station_code"].iloc[0],
+                "test_samples": len(station_test),
+                "mae": station_metrics["mae"],
+                "rmse": station_metrics["rmse"],
+                "r2": station_metrics["r2"],
+            }
+        )
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -93,160 +120,35 @@ def main():
     print("=" * 70)
 
     if not INPUT_FILE.exists():
-        raise FileNotFoundError(
-            f"Could not find:\n{INPUT_FILE}"
-        )
+        raise FileNotFoundError(f"Could not find:\n{INPUT_FILE}")
 
     print("\nLoading dataset...")
+    df = pd.read_csv(INPUT_FILE, parse_dates=["timestamp"])
+    print(f"Rows loaded: {len(df):,}")
 
-    df = pd.read_csv(
-        INPUT_FILE,
-        parse_dates=["timestamp"],
-    )
-
-    print(
-        f"Rows loaded: {len(df):,}"
-    )
-
-    # --------------------------------------------------------
-    # Sort
-    # --------------------------------------------------------
-
-    df = df.sort_values(
-        [
-            "station_code",
-            "timestamp",
-        ]
-    ).reset_index(drop=True)
-
-    # --------------------------------------------------------
-    # Create directories
-    # --------------------------------------------------------
-
-    REPORT_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    df = df.sort_values(["station_code", "timestamp"]).reset_index(drop=True)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
     overall_results = []
     station_results = []
 
-    # ========================================================
-    # EACH FORECAST HORIZON
-    # ========================================================
-
     for horizon_name, horizon_hours in HORIZONS.items():
+        print(f"\n{'-' * 70}")
+        print(f"HORIZON: {horizon_name}")
+        print(f"{'-' * 70}")
 
-        print(
-            f"\n{'-' * 70}"
-        )
+        target_column = f"target_pm25_{horizon_name}"
+        subset = prepare_persistence_subset(df, target_column)
+        train, validation, test = create_time_splits(subset)
 
-        print(
-            f"HORIZON: {horizon_name}"
-        )
+        print(f"Train samples:      {len(train):,}")
+        print(f"Validation samples: {len(validation):,}")
+        print(f"Test samples:       {len(test):,}")
 
-        print(
-            f"{'-' * 70}"
-        )
-
-        target_column = (
-            f"target_pm25_{horizon_name}"
-        )
-
-        # ----------------------------------------------------
-        # Persistence prediction
-        #
-        # Prediction = current PM2.5
-        # Target     = PM2.5 at future horizon
-        # ----------------------------------------------------
-
-        subset = df[
-            [
-                "timestamp",
-                "station_code",
-                "pm25",
-                target_column,
-            ]
-        ].copy()
-
-        subset = subset.rename(
-            columns={
-                target_column: "actual",
-                "pm25": "prediction",
-            }
-        )
-
-        # ----------------------------------------------------
-        # Remove rows where either value is unavailable
-        # ----------------------------------------------------
-
-        subset = subset.dropna(
-            subset=[
-                "prediction",
-                "actual",
-            ]
-        )
-
-        # ----------------------------------------------------
-        # Chronological split
-        # ----------------------------------------------------
-
-        train = subset[
-            subset["timestamp"]
-            < TRAIN_END
-        ]
-
-        validation = subset[
-            (
-                subset["timestamp"]
-                >= TRAIN_END
-            )
-            & (
-                subset["timestamp"]
-                < VALIDATION_END
-            )
-        ]
-
-        test = subset[
-            subset["timestamp"]
-            >= VALIDATION_END
-        ]
-
-        print(
-            f"Train samples:      {len(train):,}"
-        )
-
-        print(
-            f"Validation samples: {len(validation):,}"
-        )
-
-        print(
-            f"Test samples:       {len(test):,}"
-        )
-
-        # ----------------------------------------------------
-        # Overall test metrics
-        # ----------------------------------------------------
-
-        metrics = calculate_metrics(
-            test["actual"],
-            test["prediction"],
-        )
-
-        print(
-            f"\nTest MAE:  "
-            f"{metrics['mae']:.4f}"
-        )
-
-        print(
-            f"Test RMSE: "
-            f"{metrics['rmse']:.4f}"
-        )
-
-        print(
-            f"Test R²:   "
-            f"{metrics['r2']:.4f}"
-        )
+        metrics = calculate_metrics(test["actual"], test["prediction"])
+        print(f"\nTest MAE:  {metrics['mae']:.4f}")
+        print(f"Test RMSE: {metrics['rmse']:.4f}")
+        print(f"Test R²:   {metrics['r2']:.4f}")
 
         overall_results.append(
             {
@@ -261,100 +163,22 @@ def main():
             }
         )
 
-        # ----------------------------------------------------
-        # Per-station test metrics
-        # ----------------------------------------------------
+        append_station_metrics(station_results, horizon_name, horizon_hours, test)
 
-        for station, station_test in test.groupby(
-            "station_code"
-        ):
+    results_df = pd.DataFrame(overall_results)
+    station_results_df = pd.DataFrame(station_results)
+    results_df.to_csv(SUMMARY_FILE, index=False)
+    station_results_df.to_csv(STATION_FILE, index=False)
 
-            if len(station_test) < 2:
-                continue
-
-            station_metrics = calculate_metrics(
-                station_test["actual"],
-                station_test["prediction"],
-            )
-
-            station_results.append(
-                {
-                    "horizon": horizon_name,
-                    "horizon_hours": horizon_hours,
-                    "station_code": station,
-                    "station_name": station_test[
-                        "station_code"
-                    ].iloc[0],
-                    "test_samples": len(station_test),
-                    "mae": station_metrics["mae"],
-                    "rmse": station_metrics["rmse"],
-                    "r2": station_metrics["r2"],
-                }
-            )
-
-    # ========================================================
-    # SAVE RESULTS
-    # ========================================================
-
-    results_df = pd.DataFrame(
-        overall_results
-    )
-
-    station_results_df = pd.DataFrame(
-        station_results
-    )
-
-    results_df.to_csv(
-        SUMMARY_FILE,
-        index=False,
-    )
-
-    station_results_df.to_csv(
-        STATION_FILE,
-        index=False,
-    )
-
-    # ========================================================
-    # FINAL OUTPUT
-    # ========================================================
-
-    print(
-        "\n" + "=" * 70
-    )
-
-    print(
-        "PERSISTENCE BASELINE COMPLETE"
-    )
-
-    print(
-        "=" * 70
-    )
-
-    print(
-        "\nOverall results:"
-    )
-
-    print(
-        results_df.to_string(
-            index=False
-        )
-    )
-
-    print(
-        f"\nSaved:"
-    )
-
-    print(
-        SUMMARY_FILE
-    )
-
-    print(
-        STATION_FILE
-    )
-
-    print(
-        "\nDone."
-    )
+    print("\n" + "=" * 70)
+    print("PERSISTENCE BASELINE COMPLETE")
+    print("=" * 70)
+    print("\nOverall results:")
+    print(results_df.to_string(index=False))
+    print(f"\nSaved:")
+    print(SUMMARY_FILE)
+    print(STATION_FILE)
+    print("\nDone.")
 
 
 if __name__ == "__main__":

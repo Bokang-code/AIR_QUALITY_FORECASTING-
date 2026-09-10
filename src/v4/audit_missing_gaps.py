@@ -129,6 +129,47 @@ def find_missing_gaps(df, station_code):
 
 
 # ============================================================
+# REPORT HELPERS
+# ============================================================
+
+def print_station_gap_summary(gaps_df):
+    for station_code in sorted(gaps_df["station_code"].unique()):
+        station_gaps = gaps_df[gaps_df["station_code"] == station_code]
+        station_name = STATION_NAMES.get(station_code, "Unknown")
+
+        total_missing_hours = station_gaps["hours_missing"].sum()
+        longest_gap = station_gaps["hours_missing"].max()
+        average_gap = station_gaps["hours_missing"].mean()
+        median_gap = station_gaps["hours_missing"].median()
+
+        gaps_1h = (station_gaps["hours_missing"] == 1).sum()
+        gaps_2_6h = ((station_gaps["hours_missing"] >= 2) & (station_gaps["hours_missing"] <= 6)).sum()
+        gaps_7_23h = ((station_gaps["hours_missing"] >= 7) & (station_gaps["hours_missing"] <= 23)).sum()
+        gaps_24h_plus = (station_gaps["hours_missing"] >= 24).sum()
+
+        print(f"\n{station_code} ({station_name})")
+        print(f"  Total missing hours: {total_missing_hours:,}")
+        print(f"  Number of gaps: {len(station_gaps):,}")
+        print(f"  Longest gap: {longest_gap:,} hours")
+        print(f"  Average gap: {average_gap:.2f} hours")
+        print(f"  Median gap: {median_gap:.2f} hours")
+        print(f"  1-hour gaps: {gaps_1h:,}")
+        print(f"  2–6 hour gaps: {gaps_2_6h:,}")
+        print(f"  7–23 hour gaps: {gaps_7_23h:,}")
+        print(f"  ≥24 hour gaps: {gaps_24h_plus:,}")
+
+
+def print_longest_gaps(gaps_df):
+    print("\n" + "=" * 80)
+    print("10 LONGEST PM2.5 MISSING GAPS")
+    print("=" * 80)
+
+    longest = gaps_df.sort_values("hours_missing", ascending=False).head(10)
+    for _, gap in longest.iterrows():
+        print(f"{gap['station_code']} ({gap['station_name']}): {gap['start']} → {gap['end']} | {int(gap['hours_missing'])} hours")
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -137,376 +178,66 @@ def main():
     print("\n" + "=" * 80)
     print("PM2.5 MISSING-GAP AUDIT")
     print("=" * 80)
+    print(f"Study period: {START_DATE} → {END_DATE}")
+    print("Target: PM2.5")
+    print("\nIMPORTANT: This audit does NOT remove or modify data.")
 
-    print(
-        f"Study period: {START_DATE} → {END_DATE}"
-    )
-
-    print(
-        "Target: PM2.5"
-    )
-
-    print(
-        "\nIMPORTANT: This audit does NOT remove or modify data."
-    )
-
-    # --------------------------------------------------------
-    # Find files
-    # --------------------------------------------------------
-
-    excel_files = sorted(
-        DATA_DIR.glob("*.xlsx")
-    )
-
+    excel_files = sorted(DATA_DIR.glob("*.xlsx"))
     if not excel_files:
-
-        print(
-            "\nERROR: No Excel files found."
-        )
-
+        print("\nERROR: No Excel files found.")
         return
 
     all_gaps = []
 
-    # --------------------------------------------------------
-    # Process each station
-    # --------------------------------------------------------
-
     for file_path in excel_files:
-
         station_code = file_path.stem
-
-        print(
-            f"\nProcessing {station_code} "
-            f"({STATION_NAMES.get(station_code, 'Unknown')})..."
-        )
+        print(f"\nProcessing {station_code} ({STATION_NAMES.get(station_code, 'Unknown')})...")
 
         try:
-
-            df = pd.read_excel(
-                file_path
-            )
-
-            gaps = find_missing_gaps(
-                df,
-                station_code
-            )
+            df = pd.read_excel(file_path)
+            gaps = find_missing_gaps(df, station_code)
 
             if len(gaps) == 0:
-
-                print(
-                    "  No missing PM2.5 gaps found."
-                )
-
+                print("  No missing PM2.5 gaps found.")
                 continue
 
             all_gaps.append(gaps)
+            print(f"  Number of missing gaps: {len(gaps):,}")
+            print(f"  Longest missing gap: {gaps['hours_missing'].max():,} hours")
+            print(f"  Average missing gap: {gaps['hours_missing'].mean():.2f} hours")
+            print(f"  Median missing gap: {gaps['hours_missing'].median():.2f} hours")
 
-            # ------------------------------------------------
-            # Station summary
-            # ------------------------------------------------
-
-            print(
-                f"  Number of missing gaps: "
-                f"{len(gaps):,}"
-            )
-
-            print(
-                f"  Longest missing gap: "
-                f"{gaps['hours_missing'].max():,} hours"
-            )
-
-            print(
-                f"  Average missing gap: "
-                f"{gaps['hours_missing'].mean():.2f} hours"
-            )
-
-            print(
-                f"  Median missing gap: "
-                f"{gaps['hours_missing'].median():.2f} hours"
-            )
-
-            # ------------------------------------------------
-            # Long gaps
-            # ------------------------------------------------
-
-            print(
-                "\n  Long gaps:"
-            )
-
-            long_gaps = (
-                gaps[
-                    gaps["hours_missing"] >= 24
-                ]
-                .sort_values(
-                    "hours_missing",
-                    ascending=False
-                )
-                .head(10)
-            )
-
+            long_gaps = gaps[gaps["hours_missing"] >= 24].sort_values("hours_missing", ascending=False).head(10)
+            print("\n  Long gaps:")
             if len(long_gaps) == 0:
-
-                print(
-                    "    None ≥ 24 hours"
-                )
-
+                print("    None ≥ 24 hours")
             else:
-
                 for _, gap in long_gaps.iterrows():
-
-                    print(
-                        f"    "
-                        f"{gap['start']} → "
-                        f"{gap['end']} | "
-                        f"{int(gap['hours_missing'])} hours"
-                    )
+                    print(f"    {gap['start']} → {gap['end']} | {int(gap['hours_missing'])} hours")
 
         except Exception as e:
-
-            print(
-                f"  ERROR: {e}"
-            )
-
-    # ========================================================
-    # COMBINE RESULTS
-    # ========================================================
+            print(f"  ERROR: {e}")
 
     if not all_gaps:
-
-        print(
-            "\nNo missing PM2.5 gaps found."
-        )
-
+        print("\nNo missing PM2.5 gaps found.")
         return
 
-    gaps_df = pd.concat(
-        all_gaps,
-        ignore_index=True
-    )
+    gaps_df = pd.concat(all_gaps, ignore_index=True).sort_values(["station_code", "hours_missing"], ascending=[True, False])
+    output_file = REPORT_DIR / "pm25_missing_gaps.csv"
+    gaps_df.to_csv(output_file, index=False)
+    print(f"\nSaved: {output_file}")
 
-    # --------------------------------------------------------
-    # Sort
-    # --------------------------------------------------------
+    print("\n" + "=" * 80)
+    print("MISSING GAP SUMMARY")
+    print("=" * 80)
+    print_station_gap_summary(gaps_df)
+    print_longest_gaps(gaps_df)
 
-    gaps_df = gaps_df.sort_values(
-        [
-            "station_code",
-            "hours_missing"
-        ],
-        ascending=[
-            True,
-            False
-        ]
-    )
-
-    # ========================================================
-    # SAVE ALL GAPS
-    # ========================================================
-
-    output_file = (
-        REPORT_DIR
-        / "pm25_missing_gaps.csv"
-    )
-
-    gaps_df.to_csv(
-        output_file,
-        index=False
-    )
-
-    print(
-        f"\nSaved: {output_file}"
-    )
-
-    # ========================================================
-    # OVERALL SUMMARY
-    # ========================================================
-
-    print(
-        "\n" + "=" * 80
-    )
-
-    print(
-        "MISSING GAP SUMMARY"
-    )
-
-    print(
-        "=" * 80
-    )
-
-    for station_code in sorted(
-        gaps_df["station_code"].unique()
-    ):
-
-        station_gaps = gaps_df[
-            gaps_df["station_code"]
-            == station_code
-        ]
-
-        station_name = STATION_NAMES.get(
-            station_code,
-            "Unknown"
-        )
-
-        total_missing_hours = (
-            station_gaps["hours_missing"]
-            .sum()
-        )
-
-        longest_gap = (
-            station_gaps["hours_missing"]
-            .max()
-        )
-
-        average_gap = (
-            station_gaps["hours_missing"]
-            .mean()
-        )
-
-        median_gap = (
-            station_gaps["hours_missing"]
-            .median()
-        )
-
-        gaps_1h = (
-            station_gaps["hours_missing"]
-            == 1
-        ).sum()
-
-        gaps_2_6h = (
-            (
-                station_gaps["hours_missing"]
-                >= 2
-            )
-            & (
-                station_gaps["hours_missing"]
-                <= 6
-            )
-        ).sum()
-
-        gaps_7_23h = (
-            (
-                station_gaps["hours_missing"]
-                >= 7
-            )
-            & (
-                station_gaps["hours_missing"]
-                <= 23
-            )
-        ).sum()
-
-        gaps_24h_plus = (
-            station_gaps["hours_missing"]
-            >= 24
-        ).sum()
-
-        print(
-            f"\n{station_code} ({station_name})"
-        )
-
-        print(
-            f"  Total missing hours: "
-            f"{total_missing_hours:,}"
-        )
-
-        print(
-            f"  Number of gaps: "
-            f"{len(station_gaps):,}"
-        )
-
-        print(
-            f"  Longest gap: "
-            f"{longest_gap:,} hours"
-        )
-
-        print(
-            f"  Average gap: "
-            f"{average_gap:.2f} hours"
-        )
-
-        print(
-            f"  Median gap: "
-            f"{median_gap:.2f} hours"
-        )
-
-        print(
-            f"  1-hour gaps: "
-            f"{gaps_1h:,}"
-        )
-
-        print(
-            f"  2–6 hour gaps: "
-            f"{gaps_2_6h:,}"
-        )
-
-        print(
-            f"  7–23 hour gaps: "
-            f"{gaps_7_23h:,}"
-        )
-
-        print(
-            f"  ≥24 hour gaps: "
-            f"{gaps_24h_plus:,}"
-        )
-
-    # ========================================================
-    # LONGEST GAPS OVERALL
-    # ========================================================
-
-    print(
-        "\n" + "=" * 80
-    )
-
-    print(
-        "10 LONGEST PM2.5 MISSING GAPS"
-    )
-
-    print(
-        "=" * 80
-    )
-
-    longest = (
-        gaps_df
-        .sort_values(
-            "hours_missing",
-            ascending=False
-        )
-        .head(10)
-    )
-
-    for _, gap in longest.iterrows():
-
-        print(
-            f"{gap['station_code']} "
-            f"({gap['station_name']}): "
-            f"{gap['start']} → "
-            f"{gap['end']} | "
-            f"{int(gap['hours_missing'])} hours"
-        )
-
-    # ========================================================
-    # FINAL
-    # ========================================================
-
-    print(
-        "\n" + "=" * 80
-    )
-
-    print(
-        "AUDIT COMPLETE"
-    )
-
-    print(
-        "=" * 80
-    )
-
-    print(
-        f"Full gap report: {output_file}"
-    )
-
-    print(
-        "\nNo data has been removed."
-    )
+    print("\n" + "=" * 80)
+    print("AUDIT COMPLETE")
+    print("=" * 80)
+    print(f"Full gap report: {output_file}")
+    print("\nNo data has been removed.")
 
 
 if __name__ == "__main__":

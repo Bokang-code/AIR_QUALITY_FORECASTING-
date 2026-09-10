@@ -1,0 +1,463 @@
+/* ==================================================
+   GLOBAL
+   ================================================== */
+
+.stApp {
+    background:
+        radial-gradient(
+            circle at 85% 5%,
+            rgba(0, 220, 190, 0.08),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 10% 25%,
+            rgba(80, 120, 255, 0.06),
+            transparent 25%
+        ),
+        #0a0d0d;
+
+    color: #f2f4f3;
+}
+
+
+.block-container {
+    max-width: 1400px;
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+}
+
+
+/* ==================================================
+   TYPOGRAPHY
+   ================================================== */
+
+html,
+body,
+[class*="css"] {
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+h1,
+h2,
+h3 {
+    color: #f4f6f5 !important;
+    letter-spacing: -0.03em;
+}
+
+
+p,
+label,
+span {
+    color: #aeb8b5;
+}
+
+
+/* ==================================================
+   HEADER
+   ================================================== */
+
+.air-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #68e0c5;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+}
+
+
+.air-title {
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    line-height: 0.88;
+    letter-spacing: -0.07em;
+    font-weight: 800;
+    margin: 0;
+    color: #f4f6f5;
+}
+
+
+.air-subtitle {
+    margin-top: 1.2rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7f8b87;
+}
+
+
+/* ==================================================
+   HERO
+   ================================================== */
+
+.hero-card {
+    margin-top: 3rem;
+    padding: 2.5rem;
+
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.055),
+            rgba(255,255,255,0.015)
+        );
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+
+.hero-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #71807b;
+    margin-bottom: 0.5rem;
+}
+
+
+.hero-number {
+    font-size: clamp(4rem, 8vw, 7rem);
+    line-height: 0.9;
+    font-weight: 800;
+    letter-spacing: -0.06em;
+    color: #f4f6f5;
+}
+
+
+.hero-unit {
+    font-size: 1rem;
+    color: #7f8b87;
+    margin-left: 0.5rem;
+}
+
+
+.hero-status {
+    display: inline-block;
+
+    margin-top: 1.5rem;
+    padding: 0.5rem 0.85rem;
+
+    border-radius: 999px;
+
+    background: rgba(104,224,197,0.10);
+    border: 1px solid rgba(104,224,197,0.25);
+
+    color: #68e0c5;
+
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+
+/* ==================================================
+   CARDS
+   ================================================== */
+
+.glass-card {
+    padding: 1.5rem;
+
+    border-radius: 18px;
+
+    border: 1px solid rgba(255,255,255,0.07);
+
+    background:
+        rgba(255,255,255,0.025);
+}
+
+
+/* ==================================================
+   DIVIDERS
+   ================================================== */
+
+hr {
+    border-color: rgba(255,255,255,0.07) !important;
+}
+
+
+/* ==================================================
+   SELECT BOXES
+   ================================================== */
+
+div[data-baseweb="select"] > div {
+    background:
+        rgba(255,255,255,0.035);
+
+    border-color:
+        rgba(255,255,255,0.10);
+
+    border-radius: 12px;
+}
+
+
+div[data-baseweb="select"] > div:hover {
+    border-color:
+        rgba(104,224,197,0.45);
+}
+
+
+/* ==================================================
+   DATE INPUT
+   ================================================== */
+
+div[data-baseweb="input"] {
+    background:
+        rgba(255,255,255,0.035);
+
+    border-color:
+        rgba(255,255,255,0.10);
+
+    border-radius: 12px;
+}
+
+
+/* ==================================================
+   METRICS
+   ================================================== */
+
+[data-testid="stMetric"] {
+    background:
+        rgba(255,255,255,0.025);
+
+    border:
+        1px solid rgba(255,255,255,0.07);
+
+    border-radius:
+        18px;
+
+    padding:
+        1.3rem;
+}
+
+
+[data-testid="stMetricLabel"] {
+    color: #7f8b87 !important;
+
+    font-size:
+        0.72rem;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.12em;
+}
+
+
+[data-testid="stMetricValue"] {
+    color:
+        #f4f6f5 !important;
+}
+
+
+/* ==================================================
+   SHAP EXPLAINABILITY
+   ================================================== */
+
+.shap-row {
+    padding: 1rem 0;
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.06);
+}
+
+
+.shap-header {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    gap:
+        1rem;
+}
+
+
+.shap-feature {
+    color:
+        #f1f4f3;
+
+    font-size:
+        0.92rem;
+
+    font-weight:
+        650;
+}
+
+
+.shap-value {
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        monospace;
+
+    font-size:
+        0.8rem;
+
+    color:
+        #aeb8b5;
+}
+
+
+.shap-meta {
+    margin-top:
+        0.3rem;
+
+    color:
+        #6f7b77;
+
+    font-size:
+        0.74rem;
+}
+
+
+.shap-track {
+    width:
+        100%;
+
+    height:
+        6px;
+
+    margin-top:
+        0.7rem;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(255,255,255,0.055);
+
+    overflow:
+        hidden;
+}
+
+
+.shap-bar {
+    height:
+        100%;
+
+    border-radius:
+        999px;
+
+    min-width:
+        3px;
+}
+
+
+.shap-positive {
+    background:
+        linear-gradient(
+            90deg,
+            #ff6f61,
+            #ff9b7a
+        );
+}
+
+
+.shap-negative {
+    background:
+        linear-gradient(
+            90deg,
+            #4bd8bd,
+            #8be8d5
+        );
+}
+
+
+/* ==================================================
+   HEALTH
+   ================================================== */
+
+.health-card {
+    padding:
+        2rem;
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.045),
+            rgba(255,255,255,0.015)
+        );
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+}
+
+
+.health-number {
+    font-size:
+        3.5rem;
+
+    line-height:
+        1;
+
+    font-weight:
+        800;
+
+    color:
+        #f4f6f5;
+}
+
+
+.health-unit {
+    color:
+        #7f8b87;
+
+    font-size:
+        0.85rem;
+}
+
+
+.section-label {
+    font-size:
+        0.68rem;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.18em;
+
+    color:
+        #68e0c5;
+
+    font-weight:
+        700;
+}
+
+.section-description {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: rgba(245, 245, 240, 0.58);
+    max-width: 680px;
+    margin-top: 0.35rem;
+    margin-bottom: 1.4rem;
+}
+
+/* ==================================================
+   SECTION TITLES
+   ================================================== */
+
+h2 {
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+    margin-top: 1.2rem !important;
+    margin-bottom: 0.8rem !important;
+}

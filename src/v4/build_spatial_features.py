@@ -148,103 +148,72 @@ def haversine_distance(
 # FIND NEAREST STATIONS
 # ============================================================
 
-print(
-    "Finding nearest neighbouring stations..."
-)
+def find_nearest_neighbours(station_info):
+    neighbour_map = {}
 
-neighbour_map = {}
+    for _, target in station_info.iterrows():
+        target_code = target["station_code"]
+        distances = []
 
+        for _, candidate in station_info.iterrows():
+            candidate_code = candidate["station_code"]
+            if candidate_code == target_code:
+                continue
 
-for _, target in station_info.iterrows():
-
-    target_code = target[
-        "station_code"
-    ]
-
-    distances = []
-
-    for _, candidate in station_info.iterrows():
-
-        candidate_code = candidate[
-            "station_code"
-        ]
-
-        # Don't select the target station itself.
-        if candidate_code == target_code:
-            continue
-
-        distance = haversine_distance(
-            target["latitude"],
-            target["longitude"],
-            candidate["latitude"],
-            candidate["longitude"],
-        )
-
-        distances.append(
-            (
-                candidate_code,
-                distance,
+            distance = haversine_distance(
+                target["latitude"],
+                target["longitude"],
+                candidate["latitude"],
+                candidate["longitude"],
             )
-        )
+            distances.append((candidate_code, distance))
 
-    distances.sort(
-        key=lambda x: x[1]
-    )
+        distances.sort(key=lambda x: x[1])
+        neighbour_map[target_code] = distances[:N_NEIGHBOURS]
 
-    neighbour_map[
-        target_code
-    ] = distances[
-        :N_NEIGHBOURS
-    ]
+    return neighbour_map
+
+
+def build_mapping_rows(station_info, neighbour_map):
+    rows = []
+
+    for target_code, neighbours in neighbour_map.items():
+        target_name = station_info.loc[
+            station_info["station_code"] == target_code,
+            "station_name",
+        ].iloc[0]
+
+        for rank, (neighbour_code, distance) in enumerate(neighbours, start=1):
+            neighbour_name = station_info.loc[
+                station_info["station_code"] == neighbour_code,
+                "station_name",
+            ].iloc[0]
+
+            rows.append(
+                {
+                    "target_station_code": target_code,
+                    "target_station_name": target_name,
+                    "neighbour_rank": rank,
+                    "neighbour_station_code": neighbour_code,
+                    "neighbour_station_name": neighbour_name,
+                    "distance_km": round(distance, 4),
+                }
+            )
+
+    return pd.DataFrame(rows)
+
+
+print("Finding nearest neighbouring stations...")
+neighbour_map = find_nearest_neighbours(station_info)
 
 # ============================================================
 # SAVE NEAREST-STATION MAPPING
 # ============================================================
 
-SPATIAL_REPORT_DIR = Path(
-    "reports/v4/spatial"
-)
+SPATIAL_REPORT_DIR = Path("reports/v4/spatial")
+SPATIAL_REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
-SPATIAL_REPORT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
-
-mapping_rows = []
-
-for target_code, neighbours in neighbour_map.items():
-
-    target_name = station_info.loc[
-        station_info["station_code"] == target_code,
-        "station_name",
-    ].iloc[0]
-
-    for rank, (
-        neighbour_code,
-        distance
-    ) in enumerate(
-        neighbours,
-        start=1
-    ):
-
-        neighbour_name = station_info.loc[
-            station_info["station_code"] == neighbour_code,
-            "station_name",
-        ].iloc[0]
-
-        mapping_rows.append({
-            "target_station_code": target_code,
-            "target_station_name": target_name,
-            "neighbour_rank": rank,
-            "neighbour_station_code": neighbour_code,
-            "neighbour_station_name": neighbour_name,
-            "distance_km": round(distance, 4),
-        })
-
-
-mapping_df = pd.DataFrame(
-    mapping_rows
-)
+mapping_df = build_mapping_rows(station_info, neighbour_map)
 
 mapping_file = (
     SPATIAL_REPORT_DIR
